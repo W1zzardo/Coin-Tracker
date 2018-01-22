@@ -2,7 +2,7 @@ from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
-from tempfile import mkdtemp
+from tempfile import gettempdir
 
 from helpers import *
 
@@ -22,107 +22,146 @@ if app.config["DEBUG"]:
 app.jinja_env.filters["usd"] = usd
 
 # configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_FILE_DIR"] = mkdtemp()
+app.config["SESSION_FILE_DIR"] = gettempdir()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # configure CS50 Library to use SQLite database
-db = SQL("sqlite:///cointracker.db")
+db = SQL("sqlite:///finance.db")
 
 @app.route("/")
 @login_required
 def index():
+    # select each symbol owned by the user and it's amount
+    portfolio_symbols = db.execute("SELECT shares, symbol \
+                                    FROM portfolio WHERE id = :id", \
+                                    id=session["user_id"])
 
-    profile = db.execute("SELECT * FROM portfolios WHERE id=:id", id=session["user_id"])
-    return render_template("index.html", profile=profile)
+    # create a temporary variable to store TOTAL worth ( cash + share)
+    total_cash = 0
+
+    # update each symbol prices and total
+    for portfolio_symbol in portfolio_symbols:
+        symbol = portfolio_symbol["symbol"]
+        shares = portfolio_symbol["shares"]
+        stock = lookup(symbol)
+        total = shares * stock["price"]
+        total_cash += total
+        db.execute("UPDATE portfolio SET price=:price, \
+                    total=:total WHERE id=:id AND symbol=:symbol", \
+                    price=usd(stock["price"]), \
+                    total=usd(total), id=session["user_id"], symbol=symbol)
+
+    # update user's cash in portfolio
+    updated_cash = db.execute("SELECT cash FROM users \
+                               WHERE id=:id", id=session["user_id"])
+
+    # update total cash -> cash + shares worth
+    total_cash += updated_cash[0]["cash"]
+
+    # print portfolio in index homepage
+    updated_portfolio = db.execute("SELECT * from portfolio \
+                                    WHERE id=:id", id=session["user_id"])
+
+    return render_template("index.html", stocks=updated_portfolio, \
+                            cash=usd(updated_cash[0]["cash"]), total= usd(total_cash) )
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
     """Buy shares of stock."""
-    if request.method == "POST":
 
-        # valid name submitted
-        if not request.form.get("symbol"):
-            return apology("No Symbol")
-        elif not request.form.get("shares"):
-            return apology("No shares")
-
-        # Symbols worden hoofdletters
-        symbol = request.form.get("symbol").upper()
-
-        # Gebruik lookup functie van helpers.py voor het ophalen van YAHOO DB
-        quote = lookup(symbol)
-
-        # check of het ophalen van de data niet gelukt is
-        if quote == None:
+    if request.method == "GET":
+        return render_template("buy.html")
+    else:
+        # ensure proper symbol
+        stock = lookup(request.form.get("symbol"))
+        if not stock:
             return apology("Invalid Symbol")
 
-        # vul shares in
-        shares = int(request.form.get("shares"))
-
-        # checkt of iets wordt in gevuld
-        if shares < 0:
-            return apology("Positive integer needed!")
+        # ensure proper number of shares
+        try:
+            shares = int(request.form.get("shares"))
+            if shares < 0:
+                return apology("Shares must be positive integer")
+        except:
+            return apology("Shares must be positive integer")
 
         # select user's cash
-        cash = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
-        cash = int(cash[0]["cash"])
-        cash_new = cash - quote["price"] * shares
+        money = db.execute("SELECT cash FROM users WHERE id = :id", \
+                            id=session["user_id"])
 
-        # check if you can afford the shares
-        if  cash_new < 0:
-            return apology("Not enough cash!")
+        # check if enough money to buy
+        if not money or float(money[0]["cash"]) < stock["price"] * shares:
+            return apology("Not enough money")
 
-        db.execute("UPDATE users SET cash = :cash_new WHERE id = :id ", cash_new=cash_new, id=session['user_id'])
-        # koop shares en update cash
-        rows = db.execute("SELECT * FROM portfolios WHERE id = :id AND symbol=:symbol", id=session['user_id'], symbol=symbol)
+        # update history
+        db.execute("INSERT INTO histories (symbol, shares, price, id) \
+                    VALUES(:symbol, :shares, :price, :id)", \
+                    symbol=stock["symbol"], shares=shares, \
+                    price=usd(stock["price"]), id=session["user_id"])
 
-        # Als hij de shares nog niet heeft maak nieuwe rij in de portfolio
-        if len(rows) == 0:
-            db.execute("INSERT INTO portfolios (id, symbol, shares) VALUES (:id, :symbol, :shares)", id=session["user_id"], symbol=symbol, shares=shares)
-        # Anders update de shares
+        # update user cash
+        db.execute("UPDATE users SET cash = cash - :purchase WHERE id = :id", \
+                    id=session["user_id"], \
+                    purchase=stock["price"] * float(shares))
+
+        # Select user shares of that symbol
+        user_shares = db.execute("SELECT shares FROM portfolio \
+                           WHERE id = :id AND symbol=:symbol", \
+                           id=session["user_id"], symbol=stock["symbol"])
+
+        # if user doesn't has shares of that symbol, create new stock object
+        if not user_shares:
+            db.execute("INSERT INTO portfolio (name, shares, price, total, symbol, id) \
+                        VALUES(:name, :shares, :price, :total, :symbol, :id)", \
+                        name=stock["name"], shares=shares, price=usd(stock["price"]), \
+                        total=usd(shares * stock["price"]), \
+                        symbol=stock["symbol"], id=session["user_id"])
+
+        # Else increment the shares count
         else:
-            db.execute("UPDATE portfolios SET shares= shares + :shares WHERE id=:id", shares=shares, id=session["user_id"])
+            shares_total = user_shares[0]["shares"] + shares
+            db.execute("UPDATE portfolio SET shares=:shares \
+                        WHERE id=:id AND symbol=:symbol", \
+                        shares=shares_total, id=session["user_id"], \
+                        symbol=stock["symbol"])
 
-        # Update history
-        db.execute("INSERT INTO history (id, symbol, shares, price) VALUES (:id, :symbol, :shares, :price)", id=session["user_id"], symbol=symbol, shares=shares, price=quote["price"])
-
-        # redirect user to home page
+        # return to index
         return redirect(url_for("index"))
-
-    else:
-        return render_template("buy.html")
-
-
 
 
 @app.route("/history")
 @login_required
 def history():
     """Show history of transactions."""
-    geschiedenis = db.execute("SELECT * FROM history WHERE id=:id", id=session["user_id"])
+    histories = db.execute("SELECT * from histories WHERE id=:id", id=session["user_id"])
 
-    return render_template("history.html", geschiedenis=geschiedenis)
-
+    return render_template("history.html", histories=histories)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in."""
+
     # forget any user_id
     session.clear()
+
     # if user reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
+
         # ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username")
+            return apology("Must provide username")
+
         # ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password")
+            return apology("Must provide password")
 
         # query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username"))
+        rows = db.execute("SELECT * FROM users \
+                           WHERE username = :username", \
+                           username=request.form.get("username"))
 
         # ensure username exists and password is correct
         if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
@@ -133,6 +172,7 @@ def login():
 
         # redirect user to home page
         return redirect(url_for("index"))
+
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
@@ -151,161 +191,137 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
-    # if user reached route via POST (as by submitting a form via POST)
+
     if request.method == "POST":
+        rows = lookup(request.form.get("symbol"))
 
-        row = request.form.get("symbol")
-        # valid name submitted
-        if not row:
-            return apology("No Symbol")
-
-        # Symbols worden hoofdletters
-        symbol = request.form.get("symbol").upper()
-
-        # Gebruik lookup functie van helpers.py voor het ophalen van YAHOO DB
-        quote = lookup(symbol)
-        # check of het ophalen van de data niet gelukt is
-        if quote == None:
+        if not rows:
             return apology("Invalid Symbol")
 
-        return render_template("quoted.html", name=quote["name"], symbol=symbol, price=quote["price"])
+        return render_template("quoted.html", stock=rows)
 
     else:
         return render_template("quote.html")
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user."""
-    # forget any user_id
-    session.clear()
 
-     # if user reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
         # ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username")
+            return apology("Must provide username")
 
         # ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password")
+            return apology("Must provide password")
 
-        # ensure password_check was submitted
-        elif not request.form.get("password_check"):
-            return apology("must provide password")
-        # ensure passwords are equal
-        elif request.form.get("password") != request.form.get("password_check"):
-            return apology("password did not match")
+        # ensure password and verified password is the same
+        elif request.form.get("password") != request.form.get("passwordagain"):
+            return apology("password doesn't match")
 
-        # add user into database
-        result = db.execute("INSERT  INTO users(username, hash) VALUES (:username, :hash)", username=request.form.get("username"), hash=pwd_context.hash(request.form.get("password")))
+        # insert the new user into users, storing the hash of the user's password
+        result = db.execute("INSERT INTO users (username, hash) \
+                             VALUES(:username, :hash)", \
+                             username=request.form.get("username"), \
+                             hash=pwd_context.encrypt(request.form.get("password")))
 
-        # if the username already exists -> messege
         if not result:
-            return apology("Username already taken")
-
-        # vraag username
-        rows = db.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username"))
-
-        # ensure username exists and password is correct
-        if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
-            return apology("invalid username and/or password")
+            return apology("Username already exist")
 
         # remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        session["user_id"] = result
 
         # redirect user to home page
         return redirect(url_for("index"))
+
     else:
         return render_template("register.html")
-
 
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock."""
-    if request.method == "POST":
-
-        # valid name submitted
-        if not request.form.get("symbol"):
-            return apology("No Symbol")
-
-        # Symbols worden hoofdletters
-        symbol = request.form.get("symbol").upper()
-
-        # Gebruik lookup functie van helpers.py voor het ophalen van YAHOO DB
-        quote = lookup(symbol)
-
-        # check of het ophalen van de data niet gelukt is
-        if quote == None:
+    if request.method == "GET":
+        return render_template("sell.html")
+    else:
+        # ensure proper symbol
+        stock = lookup(request.form.get("symbol"))
+        if not stock:
             return apology("Invalid Symbol")
 
-        # vul shares in
-        shares = int(request.form.get("shares"))
+        # ensure proper number of shares
+        try:
+            shares = int(request.form.get("shares"))
+            if shares < 0:
+                return apology("Shares must be positive integer")
+        except:
+            return apology("Shares must be positive integer")
 
-         # kijkt of de user de shares heeft die hij wilt verkopen
-        owned_shares = db.execute("SELECT shares FROM portfolios WHERE id= :id AND symbol= :symbol", id=session["user_id"], symbol=symbol)
-        if (len(owned_shares)) == 0:
-            return apology("symbol niet in bezit")
+        # select the symbol shares of that user
+        user_shares = db.execute("SELECT shares FROM portfolio \
+                                 WHERE id = :id AND symbol=:symbol", \
+                                 id=session["user_id"], symbol=stock["symbol"])
 
-        own_shares = owned_shares[0]["shares"]
-        updated_shares = own_shares - shares
-        if (updated_shares) < 0:
-            return apology("U don't have these shares")
+        # check if enough shares to sell
+        if not user_shares or int(user_shares[0]["shares"]) < shares:
+            return apology("Not enough shares")
 
-        # cash neemt toe met het bedrag van cash_sell
-        price = quote["price"]
-        cash_sell = price * shares;
+        # update history of a sell
+        db.execute("INSERT INTO histories (symbol, shares, price, id) \
+                    VALUES(:symbol, :shares, :price, :id)", \
+                    symbol=stock["symbol"], shares=-shares, \
+                    price=usd(stock["price"]), id=session["user_id"])
 
-        # update de user tabel in de D.B
-        db.execute("UPDATE users SET cash = cash + :cash_sell WHERE id = :id", cash_sell=cash_sell, id=session['user_id'])
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
+                    id=session["user_id"], \
+                    purchase=stock["price"] * float(shares))
 
-        # update portfolios tabel in de D.B, maar als shares 0 is, delete hele rij
-        if updated_shares == 0:
-            db.execute("DELETE FROM portfolios WHERE id = :id AND symbol=:symbol", id=session['user_id'], symbol=symbol)
-        # anders
-        elif updated_shares > 0:
-            db.execute("UPDATE portfolios SET shares= :updated_shares WHERE id = :id", updated_shares=updated_shares, id=session["user_id"])
+        # decrement the shares count
+        shares_total = user_shares[0]["shares"] - shares
 
-        # update history tabel in de D.B (negatieve shares)
-        db.execute("INSERT INTO history (id, symbol, shares, price) VALUES (:id, :symbol, :shares, :price)", id=session["user_id"], symbol=symbol, shares=-(shares), price=price)
+        # if after decrement is zero, delete shares from portfolio
+        if shares_total == 0:
+            db.execute("DELETE FROM portfolio \
+                        WHERE id=:id AND symbol=:symbol", \
+                        id=session["user_id"], \
+                        symbol=stock["symbol"])
+        # otherwise, update portfolio shares count
+        else:
+            db.execute("UPDATE portfolio SET shares=:shares \
+                    WHERE id=:id AND symbol=:symbol", \
+                    shares=shares_total, id=session["user_id"], \
+                    symbol=stock["symbol"])
 
-        # redirect user to home page
+        # return to index
         return redirect(url_for("index"))
-    else:
-        return render_template("sell.html")
 
+@app.route("/loan", methods=["GET", "POST"])
+@login_required
+def loan():
+    """Get a loan."""
 
-@app.route("/password", methods=["GET", "POST"])
-def password():
-    '''Change password if user is logged in'''
     if request.method == "POST":
-        # checkt of er iets ingevuld is
-        if not request.form.get("old_pwd"):
-            return apology("Please enter old password")
-        elif not request.form.get("new_pwd"):
-            return apology("Please enter new password")
-        elif not request.form.get("confirm_pwd"):
-            return apology("Please enter new password again")
 
-        # checkt of nieuwe password en conformation password hetzelfde zijn
-        if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
-            return apology("Password do not match")
+        # ensure must be integers
+        try:
+            loan = int(request.form.get("loan"))
+            if loan < 0:
+                return apology("Loan must be positive amount")
+            elif loan > 1000:
+                return apology("Cannot loan more than $1,000 at once")
+        except:
+            return apology("Loan must be positive integer")
 
-        # checkt of het oude Password correct is
-        code = db.execute("SELECT hash FROM users WHERE id= :id", id=session["user_id"])
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
+                    loan=loan, id=session["user_id"])
 
-        # http://passlib.readthedocs.io
-        if not pwd_context.verify(request.form.get("old_pwd"), code[0]["hash"]):
-            return apology("old password is incorrect...")
-
-        # update de user tabel in de D.B ZIE REGISTER!
-        db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("password changed!")
-        return redirect(url_for("index"))
+        # return to index
+        return apology("Loan is successful", "No need to pay me back")
 
     else:
-        return render_template("password.html")
-
-
-
+        return render_template("loan.html")
