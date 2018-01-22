@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Homepage
+    Quote
 {% endblock %}
 
 {% block main %}
-
+    A share of {{ stock.name }} ({{ stock.symbol }}) costs ${{stock.price}}.
 {% endblock %}
