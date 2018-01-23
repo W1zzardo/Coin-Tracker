@@ -9,6 +9,7 @@ limit = int(limit)
 
 url = api + urllib.parse.urlencode({"limit": limit})
 json_data = requests.get(url).json()
+db.execute("DELETE FROM coins")
 
 for i in range(limit):
     naam = json_data[i]["id"]
