@@ -7,35 +7,56 @@
 {% block main %}
     <table class="table table-striped" style="width:100%">
       <tr>
-        <th>Symbol</th>
-        <th>Name</th> 
-        <th>Shares</th>
-        <th>Price</th>
+        <th>Coin</th>
+        <th>Prijs</th>
+        <th>Market Cap</th>
+        <th></th>
         <th>TOTAL</th>
       </tr>
     {% for stock in stocks %}
       <tr>
         <td>{{ stock.symbol }}</td>
         <td>{{ stock.name }}</td>
-        <td>{{ stock.shares }}</td> 
+        <td>{{ stock.shares }}</td>
         <td>{{ stock.price }}</td>
         <td>{{ stock.total }}</td>
       </tr>
     {% endfor %}
-      <tr>
-        <td>CASH</td>
-        <td></td>
-        <td></td> 
-        <td></td>
-        <td>{{ cash }}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td> 
-        <td></td>
-        <td><b>{{ total }}</b></td>
-      </tr>
     </table>
-    
+
 {% endblock %}
+
+
+<!--
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped" style="width:100%">
+      <tr>
+        <th>Naam</th>
+        <th>Prijs</th>
+        <th>Market Cap</th>
+        <th>percent_1h</th>
+        <th>percent_24h</th>
+        <th>percent_7d</th>
+      </tr>
+    {% for XXXX in XXXX %}
+      <tr>
+        <td>{{ XXXX.naam }}</td>
+        <td>{{ XXXX.prijs }}</td>
+        <td>{{ XXXX.cap }}</td>
+        <td>{{ XXXX.percent_1h }}</td>
+        <td>{{ XXXX.percent_24h }}</td>
+        <td>{{ XXXX.percent_7d }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}
+
+//-->
