@@ -240,6 +240,8 @@ def register():
         if not result:
             return apology("Username already exist")
 
+        db.execute("INSERT INTO favorites(username) VALUES(:username)", username = request.form.get("username"))
+
         # remember which user has logged in
         session["user_id"] = result
 
