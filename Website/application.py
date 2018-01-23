@@ -55,7 +55,7 @@ def index2():
         stock = lookup(symbol)
         total = shares * stock["price"]
         total_cash += total
-        db.execute("UPDATE portfolio SET price=:price, \
+        db.execute("UPDATE portfolio SET pri     ce=:price, \
                     total=:total WHERE id=:id AND symbol=:symbol", \
                     price=usd(stock["price"]), \
                     total=usd(total), id=session["user_id"], symbol=symbol)
