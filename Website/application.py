@@ -231,16 +231,19 @@ def register():
         elif request.form.get("password") != request.form.get("passwordagain"):
             return apology("password doesn't match")
 
+        username=request.form.get("username")
         # insert the new user into users, storing the hash of the user's password
         result = db.execute("INSERT INTO users (username, hash) \
                              VALUES(:username, :hash)", \
                              username=request.form.get("username"), \
                              hash=pwd_context.hash(request.form.get("password")))
 
+        username=request.form.get("username")
+
         if not result:
             return apology("Username already exist")
 
-        db.execute("INSERT INTO favorites(username) VALUES(:username)", username = request.form.get("username"))
+        db.execute("CREATE TABLE '{}' ('favorites' TEXT NOT NULL PRIMARY KEY)" .format(username))
 
         # remember which user has logged in
         session["user_id"] = result
