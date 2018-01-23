@@ -83,57 +83,59 @@ def buy():
         return render_template("buy.html")
     else:
         # ensure proper symbol
-        stock = lookup(request.form.get("symbol"))
-        if not stock:
+        if request.method == "POST":
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+
+        if not search:
             return apology("Invalid Symbol")
 
         # ensure proper number of shares
         try:
-            shares = int(request.form.get("shares"))
-            if shares < 0:
-                return apology("Shares must be positive integer")
+            amount = int(request.form.get("amount"))
+            if amount < 0:
+                return apology("Amount must be positive!")
         except:
-            return apology("Shares must be positive integer")
+            return apology("Amount must be positive!")
 
         # select user's cash
         money = db.execute("SELECT cash FROM users WHERE id = :id", \
-                            id=session["user_id"])
+                            id = session["user_id"])
 
         # check if enough money to buy
-        if not money or float(money[0]["cash"]) < stock["price"] * shares:
+        if not money or float(money[0]["cash"]) < search[0]["prijs"] * amount:
             return apology("Not enough money")
 
         # update history
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
-                    symbol=stock["symbol"], shares=shares, \
-                    price=usd(stock["price"]), id=session["user_id"])
+                    symbol=search[0]["naam"], shares=amount, \
+                    price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash
         db.execute("UPDATE users SET cash = cash - :purchase WHERE id = :id", \
                     id=session["user_id"], \
-                    purchase=stock["price"] * float(shares))
+                    purchase=search[0]["prijs"] * float(amount))
 
         # Select user shares of that symbol
         user_shares = db.execute("SELECT shares FROM portfolio \
                            WHERE id = :id AND symbol=:symbol", \
-                           id=session["user_id"], symbol=stock["symbol"])
+                           id=session["user_id"], symbol=search[0]["naam"])
 
         # if user doesn't has shares of that symbol, create new stock object
         if not user_shares:
-            db.execute("INSERT INTO portfolio (name, shares, price, total, symbol, id) \
-                        VALUES(:name, :shares, :price, :total, :symbol, :id)", \
-                        name=stock["name"], shares=shares, price=usd(stock["price"]), \
-                        total=usd(shares * stock["price"]), \
-                        symbol=stock["symbol"], id=session["user_id"])
+            db.execute("INSERT INTO portfolio (name, shares, price, total, id) \
+                        VALUES(:name, :shares, :price, :total, :id)", \
+                        name=search[0]["naam"], shares=amount, price=usd(search[0]["prijs"]), \
+                        total=usd(amount * search[0]["prijs"]), \
+                        id=session["user_id"])
 
         # Else increment the shares count
         else:
-            shares_total = user_shares[0]["shares"] + shares
+            shares_total = user_shares[0]["shares"] + amount
             db.execute("UPDATE portfolio SET shares=:shares \
                         WHERE id=:id AND symbol=:symbol", \
                         shares=shares_total, id=session["user_id"], \
-                        symbol=stock["symbol"])
+                        symbol=search[0]["naam"])
 
         # return to index
         return redirect(url_for("index"))
@@ -233,7 +235,7 @@ def register():
         result = db.execute("INSERT INTO users (username, hash) \
                              VALUES(:username, :hash)", \
                              username=request.form.get("username"), \
-                             hash=pwd_context.encrypt(request.form.get("password")))
+                             hash=pwd_context.hash(request.form.get("password")))
 
         if not result:
             return apology("Username already exist")
