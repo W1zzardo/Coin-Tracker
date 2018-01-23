@@ -31,8 +31,15 @@ Session(app)
 db = SQL("sqlite:///finance.db")
 
 @app.route("/")
-@login_required
 def index():
+    # select each symbol owned by the user and it's amount
+    coins = db.execute("SELECT * from coins")
+
+    return render_template("index.html", coins = coins)
+
+@app.route("/index2")
+@login_required
+def index2():
     # select each symbol owned by the user and it's amount
     portfolio_symbols = db.execute("SELECT shares, symbol \
                                     FROM portfolio WHERE id = :id", \
