@@ -200,12 +200,12 @@ def quote():
     """Get stock quote."""
 
     if request.method == "POST":
-        rows = lookup(request.form.get("symbol"))
+        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
-        if not rows:
+        if not search:
             return apology("Invalid Symbol")
 
-        return render_template("quoted.html", stock=rows)
+        return render_template("quoted.html", coins=search)
 
     else:
         return render_template("quote.html")
