@@ -1,9 +1,28 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Quote
+    Searched
 {% endblock %}
 
 {% block main %}
-    A share of {{ stock.name }} ({{ stock.symbol }}) costs ${{stock.price}}.
+    <table class="table table-striped" style="width:100%">
+      <tr>
+        <th>Naam</th>
+        <th>Prijs</th>
+        <th>Market Cap</th>
+        <th>Change (1h)</th>
+        <th>Change (24h)</th>
+        <th>Change (7d)</th>
+      </tr>
+    {% for coin in coins %}
+      <tr>
+        <td>{{ coin.naam }}</td>
+        <td>{{ coin.prijs }}</td>
+        <td>{{ coin.cap }}</td>
+        <td>{{ coin.percent_1h }}</td>
+        <td>{{ coin.percent_24h }}</td>
+        <td>{{ coin.percent_7d }}</td>
+      </tr>
+    {% endfor %}
+    </table>
 {% endblock %}
