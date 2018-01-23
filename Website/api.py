@@ -24,5 +24,5 @@ for i in range(limit):
     percent_7d = json_data[i]["percent_change_7d"]
     #percent_7d = float(percent_7d)
 
-    db.execute("INSERT INTO coins(naam) VALUES(:naam)", naam = naam)
-    #db.execute("INSERT INTO coins (naam, prijs, cap, percent_1h, percent_24h, percent_7d) VALUES(:naam, :prijs, :cap, :percent_1h, :percent_24h, :percent_7d)"), naam = naam, prijs = prijs, cap = cap, percent_1h = percent_1h, percent_24h = percent_24h, percent_7d = percent_7d
+    #db.execute("INSERT INTO coins(naam) VALUES(:naam)", naam = naam)
+    db.execute("INSERT INTO coins (naam, prijs, cap, percent_1h, percent_24h, percent_7d) VALUES(:naam, :prijs, :cap, :percent_1h, :percent_24h, :percent_7d)", naam = naam, prijs = prijs, cap = cap, percent_1h = percent_1h, percent_24h = percent_24h, percent_7d = percent_7d)
