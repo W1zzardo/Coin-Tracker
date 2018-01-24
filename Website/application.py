@@ -278,19 +278,19 @@ def sell():
                                  id=session["user_id"], symbol=stock["symbol"])
 
         # check if enough shares to sell
-        if not user_shares or int(user_shares[0]["shares"]) < shares:
+        if not user_shares or int(user_shares[0]["shares"]) < amount:
             return apology("Not enough shares")
 
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=stock["symbol"], shares=-shares, \
-                    price=usd(stock["price"]), id=session["user_id"])
+                    price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
                     id=session["user_id"], \
-                    purchase=stock["price"] * float(shares))
+                    purchase=search[0]["prijs"] * float(shares))
 
         # decrement the shares count
         shares_total = user_shares[0]["shares"] - shares
