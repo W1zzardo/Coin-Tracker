@@ -95,7 +95,7 @@ def buy():
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            return apology("Invalid Symbol")
+            return apology("Invalid Coin")
 
         # Checks if a valid amount is bought.
         try:
@@ -290,8 +290,8 @@ def sell():
 
         # Checks if a valid amount is sold.
         try:
-            shares = int(request.form.get("amount"))
-            if shares < 0:
+            amount = int(request.form.get("amount"))
+            if amount < 0:
                 return apology("Amount must be positive!")
         except:
             return apology("Amount must be positive!")
@@ -299,7 +299,7 @@ def sell():
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
                                  WHERE id = :id AND symbol=:symbol", \
-                                 id=session["user_id"], symbol=stock["symbol"])
+                                 id=session["user_id"], symbol=search["naam"])
 
         # check if enough shares to sell
         if not user_shares or int(user_shares[0]["shares"]) < amount:
@@ -308,29 +308,29 @@ def sell():
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
-                    symbol=stock["symbol"], shares=-shares, \
+                    symbol=search["naam"], shares=-amount, \
                     price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
                     id=session["user_id"], \
-                    purchase=search[0]["prijs"] * float(shares))
+                    purchase=search[0]["prijs"] * float(amount))
 
         # decrement the shares count
-        shares_total = user_shares[0]["shares"] - shares
+        shares_total = user_shares[0]["shares"] - amount
 
         # if after decrement is zero, delete shares from portfolio
         if shares_total == 0:
             db.execute("DELETE FROM portfolio \
                         WHERE id=:id AND symbol=:symbol", \
                         id=session["user_id"], \
-                        symbol=stock["symbol"])
+                        symbol=search["naam"])
         # otherwise, update portfolio shares count
         else:
             db.execute("UPDATE portfolio SET shares=:shares \
                     WHERE id=:id AND symbol=:symbol", \
                     shares=shares_total, id=session["user_id"], \
-                    symbol=stock["symbol"])
+                    symbol=search["naam"])
 
         # return to index
         return redirect(url_for("index"))
