@@ -339,3 +339,13 @@ def loan():
 
     else:
         return render_template("loan.html")
+
+def add_favorite():
+    # assuming the + button is called coins[i].add
+
+    naam = coins[i]["naam"]
+    user = session["user_id"]
+    db.execute("INSERT INTO '{}'(favorites) VALUES(:naam)" .format(user), naam = naam)
+
+def show_favorite():
+
