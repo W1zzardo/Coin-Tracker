@@ -180,7 +180,7 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # redirect user to home page
-        return redirect(url_for("index"))
+        return redirect(url_for("index2"))
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
@@ -244,7 +244,7 @@ def register():
         session["user_id"] = result
 
         # redirect user to home page
-        return redirect(url_for("index"))
+        return redirect(url_for("index2"))
 
     else:
         return render_template("register.html")
@@ -262,15 +262,15 @@ def sell():
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            return apology("Invalid Symbol")
+            return apology("Invalid Coin")
 
         # Checks if a valid amount is sold.
         try:
-            shares = int(request.form.get("shares"))
+            shares = int(request.form.get("amount"))
             if shares < 0:
-                return apology("Shares must be positive integer")
+                return apology("Amount must be positive!")
         except:
-            return apology("Shares must be positive integer")
+            return apology("Amount must be positive!")
 
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
