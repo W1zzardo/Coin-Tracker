@@ -32,7 +32,6 @@ db = SQL("sqlite:///finance.db")
 
 @app.route("/")
 def index():
-    run = api()
     # select each symbol owned by the user and it's amount
     coins = db.execute("SELECT * from coins")
 
@@ -51,6 +50,7 @@ def index2():
 #    portfolio_symbols = db.execute("SELECT shares, symbol \
 #                                    FROM portfolio WHERE id = :id", \
 #                                    id=session["user_id"])
+
 
     # create a temporary variable to store TOTAL worth ( cash + share)
 #    total_cash = 0
@@ -78,24 +78,26 @@ def index2():
 #    updated_portfolio = db.execute("SELECT * from portfolio \
 #                                    WHERE id=:id", id=session["user_id"])
 
+
     return render_template("index2.html", coins = coins )
+
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    """Buy shares of stock."""
+    """Buy a coin"""
 
     if request.method == "GET":
         return render_template("buy.html")
     else:
-        # ensure proper symbol
+        # Checks if the coin exists.
         if request.method == "POST":
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
             return apology("Invalid Symbol")
 
-        # ensure proper number of shares
+        # Checks if a valid amount is bought.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
@@ -274,22 +276,25 @@ def register():
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    """Sell shares of stock."""
-    if request.method == "GET":
-        return render_template("sell.html")
-    else:
-        # ensure proper symbol
-        stock = lookup(request.form.get("symbol"))
-        if not stock:
-            return apology("Invalid Symbol")
+    """Sell a coin"""
 
-        # ensure proper number of shares
+    if request.method == "GET":
+        return render_template("buy.html")
+    else:
+        # Checks if the coin exists.
+        if request.method == "POST":
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+
+        if not search:
+            return apology("Invalid Coin")
+
+        # Checks if a valid amount is sold.
         try:
-            shares = int(request.form.get("shares"))
+            shares = int(request.form.get("amount"))
             if shares < 0:
-                return apology("Shares must be positive integer")
+                return apology("Amount must be positive!")
         except:
-            return apology("Shares must be positive integer")
+            return apology("Amount must be positive!")
 
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
@@ -297,19 +302,19 @@ def sell():
                                  id=session["user_id"], symbol=stock["symbol"])
 
         # check if enough shares to sell
-        if not user_shares or int(user_shares[0]["shares"]) < shares:
+        if not user_shares or int(user_shares[0]["shares"]) < amount:
             return apology("Not enough shares")
 
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=stock["symbol"], shares=-shares, \
-                    price=usd(stock["price"]), id=session["user_id"])
+                    price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
                     id=session["user_id"], \
-                    purchase=stock["price"] * float(shares))
+                    purchase=search[0]["prijs"] * float(shares))
 
         # decrement the shares count
         shares_total = user_shares[0]["shares"] - shares
