@@ -32,6 +32,7 @@ db = SQL("sqlite:///finance.db")
 
 @app.route("/")
 def index():
+    run = api()
     # select each symbol owned by the user and it's amount
     coins = db.execute("SELECT * from coins")
 
@@ -40,6 +41,8 @@ def index():
 @app.route("/index2")
 @login_required
 def index2():
+
+    coins = db.execute("SELECT * from coins")
     # select each symbol owned by the user and it's amount
     portfolio_symbols = db.execute("SELECT shares, symbol \
                                     FROM portfolio WHERE id = :id", \
@@ -71,8 +74,8 @@ def index2():
     updated_portfolio = db.execute("SELECT * from portfolio \
                                     WHERE id=:id", id=session["user_id"])
 
-    return render_template("index.html", stocks=updated_portfolio, \
-                            cash=usd(updated_cash[0]["cash"]), total= usd(total_cash) )
+    return render_template("index2.html", stocks=updated_portfolio, \
+                            cash=usd(updated_cash[0]["cash"]), total= usd(total_cash), coins = coins )
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
@@ -180,7 +183,7 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # redirect user to home page
-        return redirect(url_for("index"))
+        return redirect(url_for("index2"))
 
     # else if user reached route via GET (as by clicking a link or via redirect)
     else:
@@ -244,7 +247,7 @@ def register():
         session["user_id"] = result
 
         # redirect user to home page
-        return redirect(url_for("index"))
+        return redirect(url_for("index2"))
 
     else:
         return render_template("register.html")
