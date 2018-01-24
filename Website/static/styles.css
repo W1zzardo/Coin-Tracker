@@ -24,6 +24,9 @@
     color: #2e944b;
 }
 
+.negative { background-color: #ea433b; }
+.positive { background-color: #2e944b; }
+
 main .form-control
 {
     /* center form controls */
