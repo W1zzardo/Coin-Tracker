@@ -367,10 +367,14 @@ def loan():
 def profile():
 
 
+
     coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
 
-    for i in range (lengte):
-        coins = db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"])
+    coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
+    lijst = []
+    for coin in coins:
+        for i in coin:
+            lijst.append(i)
 
-    return render_template("profile.html", coins = coins )
+    return render_template("profile.html", coins = lijst )
