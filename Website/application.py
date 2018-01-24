@@ -38,44 +38,47 @@ def index():
 
     return render_template("index.html", coins = coins)
 
-@app.route("/index2")
+@app.route("/index2", methods=["GET", "POST"])
 @login_required
 def index2():
 
     coins = db.execute("SELECT * from coins")
-    # select each symbol owned by the user and it's amount
-    portfolio_symbols = db.execute("SELECT shares, symbol \
-                                    FROM portfolio WHERE id = :id", \
-                                    id=session["user_id"])
+
+#    if request.method == "POST":
+#        add = db.execute("INSERT INTO favorites(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = {{ coins[i].naam }})
+
+#    # select each symbol owned by the user and it's amount
+#    portfolio_symbols = db.execute("SELECT shares, symbol \
+#                                    FROM portfolio WHERE id = :id", \
+#                                    id=session["user_id"])
 
     # create a temporary variable to store TOTAL worth ( cash + share)
-    total_cash = 0
+#    total_cash = 0
 
     # update each symbol prices and total
-    for portfolio_symbol in portfolio_symbols:
-        symbol = portfolio_symbol["symbol"]
-        shares = portfolio_symbol["shares"]
-        stock = lookup(symbol)
-        total = shares * stock["price"]
-        total_cash += total
-        db.execute("UPDATE portfolio SET pri     ce=:price, \
-                    total=:total WHERE id=:id AND symbol=:symbol", \
-                    price=usd(stock["price"]), \
-                    total=usd(total), id=session["user_id"], symbol=symbol)
+#    for portfolio_symbol in portfolio_symbols:
+#        symbol = portfolio_symbol["symbol"]
+#        shares = portfolio_symbol["shares"]
+#        stock = lookup(symbol)
+#        total = shares * stock["price"]
+#        total_cash += total
+#        db.execute("UPDATE portfolio SET pri     ce=:price, \
+#                    total=:total WHERE id=:id AND symbol=:symbol", \
+#                    price=usd(stock["price"]), \
+#                   total=usd(total), id=session["user_id"], symbol=symbol)
 
     # update user's cash in portfolio
-    updated_cash = db.execute("SELECT cash FROM users \
-                               WHERE id=:id", id=session["user_id"])
+#    updated_cash = db.execute("SELECT cash FROM users \
+#                               WHERE id=:id", id=session["user_id"])
 
     # update total cash -> cash + shares worth
-    total_cash += updated_cash[0]["cash"]
+#    total_cash += updated_cash[0]["cash"]
 
     # print portfolio in index homepage
-    updated_portfolio = db.execute("SELECT * from portfolio \
-                                    WHERE id=:id", id=session["user_id"])
+#    updated_portfolio = db.execute("SELECT * from portfolio \
+#                                    WHERE id=:id", id=session["user_id"])
 
-    return render_template("index2.html", stocks=updated_portfolio, \
-                            cash=usd(updated_cash[0]["cash"]), total= usd(total_cash), coins = coins )
+    return render_template("index2.html", coins = coins )
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
@@ -214,6 +217,22 @@ def quote():
 
     else:
         return render_template("quote.html")
+
+@app.route("/favs", methods=["GET", "POST"])
+@login_required
+def favs():
+
+    if request.method == "POST":
+        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+        add = db.execute("INSERT INTO favorites(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin =  request.form.get("symbol"))
+
+        if not search:
+            return apology("Invalid Symbol")
+
+        return render_template("favs.html", coins=search)
+
+    else:
+        return render_template("favs.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
