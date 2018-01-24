@@ -77,19 +77,19 @@ def index2():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    """Buy shares of stock."""
+    """Buy a coin"""
 
     if request.method == "GET":
         return render_template("buy.html")
     else:
-        # ensure proper symbol
+        # Checks if the coin exists.
         if request.method == "POST":
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
             return apology("Invalid Symbol")
 
-        # ensure proper number of shares
+        # Checks if a valid amount is bought.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
@@ -252,16 +252,19 @@ def register():
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    """Sell shares of stock."""
+    """Sell a coin"""
+
     if request.method == "GET":
-        return render_template("sell.html")
+        return render_template("buy.html")
     else:
-        # ensure proper symbol
-        stock = lookup(request.form.get("symbol"))
-        if not stock:
+        # Checks if the coin exists.
+        if request.method == "POST":
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+
+        if not search:
             return apology("Invalid Symbol")
 
-        # ensure proper number of shares
+        # Checks if a valid amount is sold.
         try:
             shares = int(request.form.get("shares"))
             if shares < 0:
