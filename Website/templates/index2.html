@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+
+    <table class="table table-striped" style="width:100%">
+      <tr>
+        <th>Naam</th>
+        <th>Prijs</th>
+        <th>Market Cap</th>
+        <th>Change (1h)</th>
+        <th>Change (24h)</th>
+        <th>Change (7d)</th>
+      </tr>
+    {% for i in range (50) %}
+      <tr>
+        <td>{{ coins[i].naam }}</td>
+        <td>{{ coins[i].prijs }}</td>
+        <td>{{ coins[i].cap }}</td>
+        <td>{{ coins[i].percent_1h }}</td>
+        <td>{{ coins[i].percent_24h }}</td>
+        <td>{{ coins[i].percent_7d }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+
+{% endblock %}
