@@ -226,7 +226,7 @@ def favs():
 
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
-        add = db.execute("INSERT INTO favorites(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin =  request.form.get("symbol"))
+        add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :naam)", id = session["user_id"], naam =  request.form.get("symbol"))
 
         if not search:
             return apology("Invalid Symbol")
@@ -361,3 +361,16 @@ def loan():
 
     else:
         return render_template("loan.html")
+
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+
+
+    coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
+    lengte = len(coins1)
+
+    for i in range (lengte):
+        coins = db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"])
+
+    return render_template("profile.html", coins = coins )
