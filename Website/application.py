@@ -231,19 +231,14 @@ def register():
         elif request.form.get("password") != request.form.get("passwordagain"):
             return apology("password doesn't match")
 
-        username=request.form.get("username")
         # insert the new user into users, storing the hash of the user's password
         result = db.execute("INSERT INTO users (username, hash) \
                              VALUES(:username, :hash)", \
                              username=request.form.get("username"), \
                              hash=pwd_context.hash(request.form.get("password")))
 
-        username=request.form.get("username")
-
         if not result:
             return apology("Username already exist")
-
-        db.execute("CREATE TABLE '{}' ('favorites' TEXT PRIMARY KEY)" .format(username))
 
         # remember which user has logged in
         session["user_id"] = result
@@ -339,13 +334,3 @@ def loan():
 
     else:
         return render_template("loan.html")
-
-def add_favorite():
-    # assuming the + button is called coins[i].add
-
-    naam = coins[i]["naam"]
-    user = session["user_id"]
-    db.execute("INSERT INTO '{}'(favorites) VALUES(:naam)" .format(user), naam = naam)
-
-def show_favorite():
-
