@@ -14,15 +14,18 @@
         <th>Change (1h)</th>
         <th>Change (24h)</th>
         <th>Change (7d)</th>
+        <th>Add coin to favorites</th>
       </tr>
-    {% for i in range (50) %}
+    {% for i in range (10) %}
       <tr>
+        <th>{{ i + 1 }}</th>
         <td>{{ coins[i].naam }}</td>
         <td>{{ coins[i].prijs }}</td>
         <td>{{ coins[i].cap }}</td>
         <td>{{ coins[i].percent_1h }}</td>
         <td>{{ coins[i].percent_24h }}</td>
         <td>{{ coins[i].percent_7d }}</td>
+        <td><button type="button" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td>
       </tr>
     {% endfor %}
     </table>
