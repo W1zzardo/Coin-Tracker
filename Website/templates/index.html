@@ -15,27 +15,15 @@
         <th>Change (24h)</th>
         <th>Change (7d)</th>
       </tr>
-    {% for i in range (10) %}
+    {% for i in range (50) %}
       <tr>
         <th>{{ i + 1 }}</th>
         <td>{{ coins[i].naam }}</td>
         <td>{{ coins[i].prijs }}</td>
         <td>{{ coins[i].cap }}</td>
-            {% if coins[i].percent_1h|float > 0 %}
-                <td class="positive">{{ coins[i].percent_1h }}%</td>
-            {% else %}
-                <td class="nesgative">{{ coins[i].percent_1h }}%</td>
-            {% endif %}
-            {% if coins[i].percent_24h|float > 0 %}
-                <td class="positive">{{ coins[i].percent_24h }}%</td>
-            {% else %}
-                <td class="negative">{{ coins[i].percent_24h }}%</td>
-            {% endif %}
-            {% if coins[i].percent_7d|float > 0 %}
-                <td class="positive">{{ coins[i].percent_7d }}%</td>
-            {% else %}
-                <td class="negative">{{ coins[i].percent_7d }}%</td>
-            {% endif %}
+        <td>{{ coins[i].percent_1h }}</td>
+        <td>{{ coins[i].percent_24h }}</td>
+        <td>{{ coins[i].percent_7d }}</td>
       </tr>
     {% endfor %}
     </table>

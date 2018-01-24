@@ -146,7 +146,7 @@ def buy():
                         symbol=search[0]["naam"])
 
         # return to index
-        return redirect(url_for("index2"))
+        return redirect(url_for("index"))
 
 
 @app.route("/history")
@@ -278,7 +278,7 @@ def sell():
     """Sell a coin"""
 
     if request.method == "GET":
-        return render_template("sell.html")
+        return render_template("buy.html")
     else:
         # Checks if the coin exists.
         if request.method == "POST":
@@ -297,17 +297,17 @@ def sell():
 
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
-                                 WHERE id = :id AND name=:name", \
-                                 id=session["user_id"], name=search[0]["naam"])
+                                 WHERE id = :id AND symbol=:symbol", \
+                                 id=session["user_id"], symbol=search["naam"])
 
         # check if enough shares to sell
         if not user_shares or int(user_shares[0]["shares"]) < amount:
-            return apology("You don't have that amount of coins!")
+            return apology("Not enough shares")
 
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
-                    symbol=search[0]["naam"], shares=-amount, \
+                    symbol=search["naam"], shares=-amount, \
                     price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
@@ -323,17 +323,43 @@ def sell():
             db.execute("DELETE FROM portfolio \
                         WHERE id=:id AND symbol=:symbol", \
                         id=session["user_id"], \
-                        symbol=search[0]["naam"])
+                        symbol=search["naam"])
         # otherwise, update portfolio shares count
         else:
             db.execute("UPDATE portfolio SET shares=:shares \
                     WHERE id=:id AND symbol=:symbol", \
                     shares=shares_total, id=session["user_id"], \
-                    symbol=search[0]["naam"])
+                    symbol=search["naam"])
 
         # return to index
-        return redirect(url_for("index2"))
+        return redirect(url_for("index"))
 
+@app.route("/loan", methods=["GET", "POST"])
+@login_required
+def loan():
+    """Get a loan."""
+
+    if request.method == "POST":
+
+        # ensure must be integers
+        try:
+            loan = int(request.form.get("loan"))
+            if loan < 0:
+                return apology("Loan must be positive amount")
+            elif loan > 1000:
+                return apology("Cannot loan more than $1,000 at once")
+        except:
+            return apology("Loan must be positive integer")
+
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
+                    loan=loan, id=session["user_id"])
+
+        # return to index
+        return apology("Loan is successful", "No need to pay me back")
+
+    else:
+        return render_template("loan.html")
 
 @app.route("/profile", methods=["GET", "POST"])
 @login_required

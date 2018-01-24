@@ -8,6 +8,7 @@
 
     <table class="table table-striped" style="width:100%">
       <tr>
+        <th>Number</th>
         <th>Naam</th>
         <th>Prijs</th>
         <th>Market Cap</th>
@@ -16,7 +17,7 @@
         <th>Change (7d)</th>
         <th>Add coin to favorites</th>
       </tr>
-    {% for i in range (10) %}
+    {% for i in range (50) %}
       <tr>
         <th>{{ i + 1 }}</th>
         <td>{{ coins[i].naam }}</td>
