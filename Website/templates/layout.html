@@ -33,7 +33,11 @@
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
                         </button>
-                        <a class="navbar-brand" href="{{ url_for('index') }}"><span class="red">Cointracker</span></a>
+                        {% if session.user_id %}
+                            <a class="navbar-brand" href="{{ url_for('index2') }}"><span class="red">Cointracker</span></a>
+                        {% else %}
+                            <a class="navbar-brand" href="{{ url_for('index') }}"><span class="red">Cointracker</span></a>
+                        {% endif %}
                     </div>
                     <div class="collapse navbar-collapse" id="navbar">
                         {% if session.user_id %}
