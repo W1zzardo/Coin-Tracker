@@ -334,30 +334,3 @@ def sell():
 
         # return to index
         return redirect(url_for("index"))
-
-@app.route("/loan", methods=["GET", "POST"])
-@login_required
-def loan():
-    """Get a loan."""
-
-    if request.method == "POST":
-
-        # ensure must be integers
-        try:
-            loan = int(request.form.get("loan"))
-            if loan < 0:
-                return apology("Loan must be positive amount")
-            elif loan > 1000:
-                return apology("Cannot loan more than $1,000 at once")
-        except:
-            return apology("Loan must be positive integer")
-
-        # update user cash (increase)
-        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
-                    loan=loan, id=session["user_id"])
-
-        # return to index
-        return apology("Loan is successful", "No need to pay me back")
-
-    else:
-        return render_template("loan.html")
