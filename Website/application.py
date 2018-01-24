@@ -243,7 +243,7 @@ def register():
         if not result:
             return apology("Username already exist")
 
-        db.execute("CREATE TABLE '{}' ('favorites' TEXT NOT NULL PRIMARY KEY)" .format(username))
+        db.execute("CREATE TABLE '{}' ('favorites' TEXT PRIMARY KEY)" .format(username))
 
         # remember which user has logged in
         session["user_id"] = result
