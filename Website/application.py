@@ -205,7 +205,6 @@ def logout():
     return redirect(url_for("login"))
 
 @app.route("/quote", methods=["GET", "POST"])
-@login_required
 def quote():
     """Get stock quote."""
 
