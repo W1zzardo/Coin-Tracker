@@ -164,6 +164,8 @@ def login():
 
         # remember which user has logged in
         session["user_id"] = rows[0]["id"]
+        session["username"] = rows[0]["username"]
+
 
         # redirect user to home page
         return redirect(url_for("index2"))
