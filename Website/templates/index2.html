@@ -8,6 +8,7 @@
 
     <table class="table table-striped" style="width:100%">
       <tr>
+        <th></th>
         <th>Naam</th>
         <th>Prijs</th>
         <th>Market Cap</th>
@@ -16,7 +17,7 @@
         <th>Change (7d)</th>
         <th>Add coin to favorites</th>
       </tr>
-    {% for i in range (10) %}
+    {% for i in range (50) %}
       <tr>
         <th>{{ i + 1 }}</th>
         <td>{{ coins[i].naam }}</td>
@@ -25,7 +26,7 @@
         <td>{{ coins[i].percent_1h }}</td>
         <td>{{ coins[i].percent_24h }}</td>
         <td>{{ coins[i].percent_7d }}</td>
-        <td><button type="button" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td>
+        <form method = "post"><td><button type="submit" formmethod = "post" ><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td></form>
       </tr>
     {% endfor %}
     </table>
