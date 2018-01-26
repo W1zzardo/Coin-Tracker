@@ -34,6 +34,7 @@ db = SQL("sqlite:///finance.db")
 def index():
     # select each symbol owned by the user and it's amount
     coins = db.execute("SELECT * from coins")
+
     return render_template("index.html", coins = coins)
 
 @app.route("/index2", methods=["GET", "POST"])
@@ -43,40 +44,18 @@ def index2():
     coins = db.execute("SELECT * from coins")
 
     if request.method == "POST":
-        add = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = {{ coins[i].naam }})
 
-#    # select each symbol owned by the user and it's amount
-#    portfolio_symbols = db.execute("SELECT shares, symbol \
-#                                    FROM portfolio WHERE id = :id", \
-#                                    id=session["user_id"])
+        if request.form.get("coin") != None :
+            coin = request.form.get("coin")
+            add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :coin)", id = session["user_id"], coin = coin)
 
+        elif request.form.get("up") != None :
+            up = request.form.get("up")
+            up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
 
-    # create a temporary variable to store TOTAL worth ( cash + share)
-#    total_cash = 0
-
-    # update each symbol prices and total
-#    for portfolio_symbol in portfolio_symbols:
-#        symbol = portfolio_symbol["symbol"]
-#        shares = portfolio_symbol["shares"]
-#        stock = lookup(symbol)
-#        total = shares * stock["price"]
-#        total_cash += total
-#        db.execute("UPDATE portfolio SET pri     ce=:price, \
-#                    total=:total WHERE id=:id AND symbol=:symbol", \
-#                    price=usd(stock["price"]), \
-#                   total=usd(total), id=session["user_id"], symbol=symbol)
-
-    # update user's cash in portfolio
-#    updated_cash = db.execute("SELECT cash FROM users \
-#                               WHERE id=:id", id=session["user_id"])
-
-    # update total cash -> cash + shares worth
-#    total_cash += updated_cash[0]["cash"]
-
-    # print portfolio in index homepage
-#    updated_portfolio = db.execute("SELECT * from portfolio \
-#                                    WHERE id=:id", id=session["user_id"])
-
+        elif request.form.get("down") != None :
+            down = request.form.get("down")
+            add = db.execute("INSERT INTO downvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = down)
 
     return render_template("index2.html", coins = coins )
 
@@ -377,8 +356,8 @@ def password():
 
         # update de user tabel in de D.B ZIE REGISTER!
         db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("Password succesfully changed!")
-        return redirect(url_for("index"))
+        flash("password changed!")
+        return redirect(url_for("login"))
 
     else:
         return render_template("password.html")
@@ -386,6 +365,9 @@ def password():
 @app.route("/clipboard", methods=["GET", "POST"])
 def clipboard():
     """Post to the clipboard"""
+
+
+
     if request.method == "POST":
         post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
 
@@ -393,4 +375,40 @@ def clipboard():
 
     else:
         return render_template("clipboard.html")
+
+#def portfolio():
+
+#    # select each symbol owned by the user and it's amount
+#    portfolio_symbols = db.execute("SELECT shares, symbol \
+#                                    FROM portfolio WHERE id = :id", \
+#                                    id=session["user_id"])
+
+
+    # create a temporary variable to store TOTAL worth ( cash + share)
+#    total_cash = 0
+
+    # update each symbol prices and total
+#    for portfolio_symbol in portfolio_symbols:
+#        symbol = portfolio_symbol["symbol"]
+#        shares = portfolio_symbol["shares"]
+#        stock = lookup(symbol)
+#        total = shares * stock["price"]
+#        total_cash += total
+#        db.execute("UPDATE portfolio SET pri     ce=:price, \
+#                    total=:total WHERE id=:id AND symbol=:symbol", \
+#                    price=usd(stock["price"]), \
+#                   total=usd(total), id=session["user_id"], symbol=symbol)
+
+    # update user's cash in portfolio
+#    updated_cash = db.execute("SELECT cash FROM users \
+#                               WHERE id=:id", id=session["user_id"])
+
+    # update total cash -> cash + shares worth
+#    total_cash += updated_cash[0]["cash"]
+
+    # print portfolio in index homepage
+#    updated_portfolio = db.execute("SELECT * from portfolio \
+#                                    WHERE id=:id", id=session["user_id"])
+
+
 
