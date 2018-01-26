@@ -351,3 +351,35 @@ def profile():
             lijst.append(i)
 
     return render_template("profile.html", coins = lijst )
+
+
+@app.route("/password", methods=["GET", "POST"])
+def password():
+    '''Change password if user is logged in'''
+    if request.method == "POST":
+        # checkt of er iets ingevuld is
+        if not request.form.get("old_pwd"):
+            return apology("Please enter old password")
+        elif not request.form.get("new_pwd"):
+            return apology("Please enter new password")
+        elif not request.form.get("confirm_pwd"):
+            return apology("Please enter new password again")
+
+        # checkt of nieuwe password en conformation password hetzelfde zijn
+        if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
+            return apology("Password do not match")
+
+        # checkt of het oude Password correct is
+        code = db.execute("SELECT hash FROM users WHERE id= :id", id=session["user_id"])
+
+        # http://passlib.readthedocs.io
+        if not pwd_context.verify(request.form.get("old_pwd"), code[0]["hash"]):
+            return apology("old password is incorrect...")
+
+        # update de user tabel in de D.B ZIE REGISTER!
+        db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
+        flash("password changed!")
+        return redirect(url_for("login"))
+
+    else:
+        return render_template("password.html")
