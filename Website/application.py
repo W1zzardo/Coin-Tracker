@@ -34,7 +34,6 @@ db = SQL("sqlite:///finance.db")
 def index():
     # select each symbol owned by the user and it's amount
     coins = db.execute("SELECT * from coins")
-
     return render_template("index.html", coins = coins)
 
 @app.route("/index2", methods=["GET", "POST"])
@@ -378,8 +377,8 @@ def password():
 
         # update de user tabel in de D.B ZIE REGISTER!
         db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("password changed!")
-        return redirect(url_for("login"))
+        flash("Password succesfully changed!")
+        return redirect(url_for("index"))
 
     else:
         return render_template("password.html")

@@ -52,6 +52,7 @@
                                 <li><a href="{{ url_for('profile') }}">Profile</a></li>
                                 <li><a href="{{ url_for('password') }}">Change Password</a></li>
                                 <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+                                <li><a> {{ session.user_id }} </a></li>
                             </ul>
                         {% else %}
                             <ul class="nav navbar-nav">
