@@ -26,7 +26,7 @@
         <td>{{ coins[i].percent_1h }}</td>
         <td>{{ coins[i].percent_24h }}</td>
         <td>{{ coins[i].percent_7d }}</td>
-        <td><button type="button" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td>
+        <form method = "post"><td><button type="submit" formmethod = "post" ><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td></form>
       </tr>
     {% endfor %}
     </table>
