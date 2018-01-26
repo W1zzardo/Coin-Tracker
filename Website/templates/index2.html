@@ -16,6 +16,8 @@
         <th>Change (24h)</th>
         <th>Change (7d)</th>
         <th>Add coin to favorites</th>
+        <th>Vote Up</th>
+        <th>Vote Down</th>
       </tr>
     {% for i in range (50) %}
       <tr>
@@ -26,7 +28,9 @@
         <td>{{ coins[i].percent_1h }}</td>
         <td>{{ coins[i].percent_24h }}</td>
         <td>{{ coins[i].percent_7d }}</td>
-        <form method = "post"><td><button type="submit" formmethod = "post" ><span class="glyphicon glyphicon-plus-sign"></span> Add </button></td></form>
+        <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "coin" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-plus-sign"></span> Add </button></form></td>
+        <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "up" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-arrow-up"></span> Up </button></form></td>
+        <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "down" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-arrow-down"></span> Down </button></form></td>
       </tr>
     {% endfor %}
     </table>
