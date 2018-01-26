@@ -146,7 +146,7 @@ def buy():
                         symbol=search[0]["naam"])
 
         # return to index
-        return redirect(url_for("index2"))
+        return redirect(url_for("index"))
 
 
 @app.route("/history")
@@ -278,7 +278,7 @@ def sell():
     """Sell a coin"""
 
     if request.method == "GET":
-        return render_template("sell.html")
+        return render_template("buy.html")
     else:
         # Checks if the coin exists.
         if request.method == "POST":
@@ -297,17 +297,17 @@ def sell():
 
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
-                                 WHERE id = :id AND name=:name", \
-                                 id=session["user_id"], name=search[0]["naam"])
+                                 WHERE id = :id AND symbol=:symbol", \
+                                 id=session["user_id"], symbol=search["naam"])
 
         # check if enough shares to sell
         if not user_shares or int(user_shares[0]["shares"]) < amount:
-            return apology("You don't have that amount of coins!")
+            return apology("Not enough shares")
 
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
-                    symbol=search[0]["naam"], shares=-amount, \
+                    symbol=search["naam"], shares=-amount, \
                     price=usd(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
@@ -323,17 +323,43 @@ def sell():
             db.execute("DELETE FROM portfolio \
                         WHERE id=:id AND symbol=:symbol", \
                         id=session["user_id"], \
-                        symbol=search[0]["naam"])
+                        symbol=search["naam"])
         # otherwise, update portfolio shares count
         else:
             db.execute("UPDATE portfolio SET shares=:shares \
                     WHERE id=:id AND symbol=:symbol", \
                     shares=shares_total, id=session["user_id"], \
-                    symbol=search[0]["naam"])
+                    symbol=search["naam"])
 
         # return to index
-        return redirect(url_for("index2"))
+        return redirect(url_for("index"))
 
+@app.route("/loan", methods=["GET", "POST"])
+@login_required
+def loan():
+    """Get a loan."""
+
+    if request.method == "POST":
+
+        # ensure must be integers
+        try:
+            loan = int(request.form.get("loan"))
+            if loan < 0:
+                return apology("Loan must be positive amount")
+            elif loan > 1000:
+                return apology("Cannot loan more than $1,000 at once")
+        except:
+            return apology("Loan must be positive integer")
+
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
+                    loan=loan, id=session["user_id"])
+
+        # return to index
+        return apology("Loan is successful", "No need to pay me back")
+
+    else:
+        return render_template("loan.html")
 
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
@@ -351,35 +377,3 @@ def profile():
             lijst.append(i)
 
     return render_template("profile.html", coins = lijst )
-
-
-@app.route("/password", methods=["GET", "POST"])
-def password():
-    '''Change password if user is logged in'''
-    if request.method == "POST":
-        # checkt of er iets ingevuld is
-        if not request.form.get("old_pwd"):
-            return apology("Please enter old password")
-        elif not request.form.get("new_pwd"):
-            return apology("Please enter new password")
-        elif not request.form.get("confirm_pwd"):
-            return apology("Please enter new password again")
-
-        # checkt of nieuwe password en conformation password hetzelfde zijn
-        if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
-            return apology("Password do not match")
-
-        # checkt of het oude Password correct is
-        code = db.execute("SELECT hash FROM users WHERE id= :id", id=session["user_id"])
-
-        # http://passlib.readthedocs.io
-        if not pwd_context.verify(request.form.get("old_pwd"), code[0]["hash"]):
-            return apology("old password is incorrect...")
-
-        # update de user tabel in de D.B ZIE REGISTER!
-        db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("password changed!")
-        return redirect(url_for("login"))
-
-    else:
-        return render_template("password.html")
