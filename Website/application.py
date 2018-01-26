@@ -43,8 +43,8 @@ def index2():
 
     coins = db.execute("SELECT * from coins")
 
-#    if request.method == "POST":
-#        add = db.execute("INSERT INTO favorites(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = {{ coins[i].naam }})
+    if request.method == "POST":
+        add = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = {{ coins[i].naam }})
 
 #    # select each symbol owned by the user and it's amount
 #    portfolio_symbols = db.execute("SELECT shares, symbol \
@@ -383,3 +383,15 @@ def password():
 
     else:
         return render_template("password.html")
+
+@app.route("/clipboard", methods=["GET", "POST"])
+def clipboard():
+    """Post to the clipboard"""
+    if request.method == "POST":
+        post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
+
+        return redirect(url_for("index2"))
+
+    else:
+        return render_template("clipboard.html")
+
