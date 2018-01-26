@@ -4,6 +4,7 @@ from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import gettempdir
 
+
 from helpers import *
 
 # configure application
@@ -164,8 +165,6 @@ def login():
 
         # remember which user has logged in
         session["user_id"] = rows[0]["id"]
-        session["username"] = rows[0]["username"]
-
 
         # redirect user to home page
         return redirect(url_for("index2"))
@@ -182,11 +181,11 @@ def logout():
     session.clear()
 
     # redirect user to login form
-    return redirect(url_for("login"))
+    return redirect(url_for("index"))
 
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
-    """Get stock quote."""
+    """Get coin information."""
 
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
@@ -197,7 +196,11 @@ def quote():
         return render_template("quoted.html", coins=search)
 
     else:
-        return render_template("quote.html")
+        if session["user_id"]:
+            return render_template("index2.html")
+
+        else:
+            return render_template("index.html")
 
 @app.route("/favs", methods=["GET", "POST"])
 @login_required
@@ -319,8 +322,6 @@ def sell():
 @login_required
 def profile():
 
-
-
     coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
 
@@ -329,6 +330,8 @@ def profile():
     for coin in coins:
         for i in coin:
             lijst.append(i)
+
+
 
     return render_template("profile.html", coins = lijst )
 
@@ -358,8 +361,8 @@ def password():
 
         # update de user tabel in de D.B ZIE REGISTER!
         db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("password changed!")
-        return redirect(url_for("login"))
+        flash("You have succesfully changed your password!")
+        return redirect(url_for("index"))
 
     else:
         return render_template("password.html")
@@ -367,8 +370,6 @@ def password():
 @app.route("/clipboard", methods=["GET", "POST"])
 def clipboard():
     """Post to the clipboard"""
-
-
 
     if request.method == "POST":
         post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
