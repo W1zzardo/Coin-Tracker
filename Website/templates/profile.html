@@ -13,6 +13,7 @@
         <th>Change (1h)</th>
         <th>Change (24h)</th>
         <th>Change (7d)</th>
+        <th>Remove coin </th>
       </tr>
     {% for coin in coins %}
       <tr>
@@ -34,6 +35,7 @@
             {% else %}
                 <td class="negative">{{ coin.percent_7d }}%</td>
             {% endif %}
+        <td><form method = "post" name = "{{ coin.naam }}"><button type="submit" name = "coin"  value = "{{ coin.naam }}"><span class="glyphicon glyphicon-minus-sign"></span> Remove</button></form></td>
       </tr>
     {% endfor %}
     </table>
