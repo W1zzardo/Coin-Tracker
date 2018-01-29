@@ -197,9 +197,9 @@ def logout():
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
     """Get stock quote."""
-
+    naam = request.form.get("symbol").lower()
     if request.method == "POST":
-        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("No result")
