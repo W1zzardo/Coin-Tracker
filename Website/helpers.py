@@ -3,6 +3,7 @@ import urllib.request
 import urllib.parse
 import requests
 from cs50 import SQL
+import time
 
 
 from flask import redirect, render_template, request, session
@@ -117,11 +118,11 @@ def usd(value):
     """Formats value as USD."""
     return f"${value:,.2f}"
 
-def api():
+def api(limit):
+
+
     db = SQL("sqlite:///finance.db")
     api = "https://api.coinmarketcap.com/v1/ticker/?"
-
-    limit = 500
     url = api + urllib.parse.urlencode({"limit": limit})
     json_data = requests.get(url).json()
     db.execute("DELETE FROM coins")
