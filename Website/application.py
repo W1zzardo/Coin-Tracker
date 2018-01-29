@@ -34,6 +34,7 @@ db = SQL("sqlite:///finance.db")
 @app.route("/")
 def index():
     # select each symbol owned by the user and it's amount
+    api()
     coins = db.execute("SELECT * from coins")
 
     return render_template("index.html", coins = coins)
@@ -41,7 +42,7 @@ def index():
 @app.route("/index2", methods=["GET", "POST"])
 @login_required
 def index2():
-
+    api()
     coins = db.execute("SELECT * from coins")
 
     if request.method == "POST":
@@ -65,7 +66,7 @@ def index2():
 @login_required
 def buy():
     """Buy a coin"""
-
+    api()
     if request.method == "GET":
         return render_template("buy.html")
     else:
@@ -139,7 +140,6 @@ def history():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in."""
-
     # forget any user_id
     session.clear()
 
@@ -176,7 +176,6 @@ def login():
 @app.route("/logout")
 def logout():
     """Log user out."""
-
     # forget any user_id
     session.clear()
 
@@ -186,7 +185,7 @@ def logout():
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
     """Get coin information."""
-
+    api()
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
@@ -205,6 +204,7 @@ def quote():
 @app.route("/favs", methods=["GET", "POST"])
 @login_required
 def favs():
+    api()
 
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
@@ -259,6 +259,7 @@ def register():
 @login_required
 def sell():
     """Sell a coin"""
+    api()
 
     if request.method == "GET":
         return render_template("sell.html")
@@ -321,6 +322,7 @@ def sell():
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
+    api()
 
     coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
@@ -331,14 +333,14 @@ def profile():
         for i in coin:
             lijst.append(i)
 
-
-
     return render_template("profile.html", coins = lijst )
 
 
 @app.route("/password", methods=["GET", "POST"])
 def password():
     '''Change password if user is logged in'''
+
+
     if request.method == "POST":
         # checkt of er iets ingevuld is
         if not request.form.get("old_pwd"):
