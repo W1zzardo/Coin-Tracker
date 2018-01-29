@@ -196,10 +196,11 @@ def logout():
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
     """Get coin information."""
-    api(100)
-
     if request.method == "POST":
-        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+        api(100)
+        naam = request.form.get("symbol").lower()
+
+        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("No result")
@@ -342,7 +343,11 @@ def sell():
 def profile():
     api(100)
 
-    coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
+    if request.method == "POST":
+        coin = request.form.get("coin")
+        remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
+
+    coins1 = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
 
     coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
