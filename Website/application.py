@@ -18,9 +18,6 @@ if app.config["DEBUG"]:
         response.headers["Pragma"] = "no-cache"
         return response
 
-# custom filter
-app.jinja_env.filters["usd"] = usd
-
 # configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = gettempdir()
 app.config["SESSION_PERMANENT"] = False
@@ -76,17 +73,17 @@ def buy():
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            flash("Invalid Coin")
+            flash("The coin you entered does not exist!")
             return redirect(url_for("buy"))
 
         # Checks if a valid amount is bought.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
-                flash("Amount must be positive!")
+                flash("You must buy a positve amount of coins!")
                 return redirect(url_for("buy"))
         except:
-            flash("Amount must be positive!")
+            flash("You must buy a positve amount of coins!")
             return redirect(url_for("buy"))
 
         # select user's cash
@@ -95,7 +92,7 @@ def buy():
 
         # check if enough money to buy
         if not money or float(money[0]["cash"]) < search[0]["prijs"] * amount:
-            flash("Not enough money")
+            flash("You don't have enough money!")
             return redirect(url_for("buy"))
 
         # update history
@@ -153,12 +150,12 @@ def login():
 
         # ensure username was submitted
         if not request.form.get("username"):
-            flash("Must provide username")
+            flash("You forgot to enter your username!")
             return redirect(url_for("login"))
 
         # ensure password was submitted
         elif not request.form.get("password"):
-            flash("Must provide password")
+            flash("You forgot to enter your password!")
             return redirect(url_for("login"))
 
         # query database for username
@@ -168,7 +165,7 @@ def login():
 
         # ensure username exists and password is correct
         if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
-            flash("Invalid username and/or password")
+            flash("This username/password combination is invalid!")
             return redirect(url_for("login"))
 
 
@@ -203,7 +200,7 @@ def quote():
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
-            flash("No result")
+            flash("The coin you entered does not exist!")
 
         return render_template("quoted.html", coins=search)
 
@@ -221,7 +218,7 @@ def favs():
         add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :naam)", id = session["user_id"], naam =  request.form.get("symbol"))
 
         if not search:
-            flash("No result")
+            flash("The coin you entered does not exist!")
             return redirect(url_for("index2"))
 
 
@@ -239,17 +236,17 @@ def register():
 
         # ensure username was submitted
         if not request.form.get("username"):
-            flash("Must provide username")
+            flash("You forgot to enter a username!")
             return redirect(url_for("register"))
 
         # ensure password was submitted
         elif not request.form.get("password"):
-            flash("Must provide password")
+            flash("You forgot to enter a password!")
             return redirect(url_for("register"))
 
         # ensure password and verified password is the same
         elif request.form.get("password") != request.form.get("passwordagain"):
-            flash("Password doesn't match")
+            flash("The passwords you provided do not match!")
             return redirect(url_for("register"))
 
         # insert the new user into users, storing the hash of the user's password
@@ -259,7 +256,7 @@ def register():
                              hash=pwd_context.hash(request.form.get("password")))
 
         if not result:
-            flash("Username already exist")
+            flash("The username you provided does already exist!")
             return redirect(url_for("register"))
 
         # remember which user has logged in
@@ -279,23 +276,24 @@ def sell():
 
     if request.method == "GET":
         return render_template("sell.html")
+
     else:
         # Checks if the coin exists.
         if request.method == "POST":
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            flash("Invalid Coin")
+            flash("The coin you entered does not exist!")
             return redirect(url_for("sell"))
 
         # Checks if a valid amount is sold.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
-                flash("Amount must be positive!")
+                flash("You must sell a positve amount of coins!")
                 return redirect(url_for("sell"))
         except:
-            flash("Amount must be positive!")
+            flash("You must sell a positve amount of coins!")
             return redirect(url_for("sell"))
 
         # select the symbol shares of that user
@@ -366,20 +364,20 @@ def password():
     if request.method == "POST":
         # checkt of er iets ingevuld is
         if not request.form.get("old_pwd"):
-            flash("Please enter old password")
+            flash("You forgot to enter your old password!")
             return redirect(url_for("password"))
 
         elif not request.form.get("new_pwd"):
-            flash("Please enter new password")
+            flash("You forgot to enter a new password!")
             return redirect(url_for("password"))
 
         elif not request.form.get("confirm_pwd"):
-            flash("Please enter new password again")
+            flash("You forgot to confirm your new password!")
             return redirect(url_for("password"))
 
         # checkt of nieuwe password en conformation password hetzelfde zijn
         if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
-            flash("Password do not match")
+            flash("The passwords you provided do not match!")
             return redirect(url_for("password"))
 
         # checkt of het oude Password correct is
@@ -387,12 +385,12 @@ def password():
 
         # http://passlib.readthedocs.io
         if not pwd_context.verify(request.form.get("old_pwd"), code[0]["hash"]):
-            flash("old password is incorrect!")
+            flash("The old password you provided is incorrect!")
             return redirect(url_for("password"))
 
         # update de user tabel in de D.B ZIE REGISTER!
         db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("password changed!")
+        flash("You've succesfully changed your password!")
         return redirect(url_for("index"))
 
     else:
