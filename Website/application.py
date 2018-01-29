@@ -4,9 +4,8 @@ from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import gettempdir
 
-
 from helpers import *
-
+import time
 # configure application
 app = Flask(__name__)
 
@@ -31,8 +30,10 @@ Session(app)
 # configure CS50 Library to use SQLite database
 db = SQL("sqlite:///finance.db")
 
+
 @app.route("/")
 def index():
+    api(60)
     # select each symbol owned by the user and it's amount
     coins = db.execute("SELECT * from coins")
 
@@ -41,7 +42,7 @@ def index():
 @app.route("/index2", methods=["GET", "POST"])
 @login_required
 def index2():
-
+    api(60)
     coins = db.execute("SELECT * from coins")
 
     if request.method == "POST":
@@ -74,15 +75,18 @@ def buy():
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            return apology("Invalid Coin")
+            flash("Invalid Coin")
+            return redirect(url_for("buy"))
 
         # Checks if a valid amount is bought.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
-                return apology("Amount must be positive!")
+                flash("Amount must be positive!")
+                return redirect(url_for("buy"))
         except:
-            return apology("Amount must be positive!")
+            flash("Amount must be positive!")
+            return redirect(url_for("buy"))
 
         # select user's cash
         money = db.execute("SELECT cash FROM users WHERE id = :id", \
@@ -90,7 +94,8 @@ def buy():
 
         # check if enough money to buy
         if not money or float(money[0]["cash"]) < search[0]["prijs"] * amount:
-            return apology("Not enough money")
+            flash("Not enough money")
+            return redirect(url_for("buy"))
 
         # update history
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
@@ -148,11 +153,13 @@ def login():
 
         # ensure username was submitted
         if not request.form.get("username"):
-            return apology("Must provide username")
+            flash("Must provide username")
+            return redirect(url_for("login"))
 
         # ensure password was submitted
         elif not request.form.get("password"):
-            return apology("Must provide password")
+            flash("Must provide password")
+            return redirect(url_for("login"))
 
         # query database for username
         rows = db.execute("SELECT * FROM users \
@@ -161,10 +168,14 @@ def login():
 
         # ensure username exists and password is correct
         if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
-            return apology("invalid username and/or password")
+            flash("Invalid username and/or password")
+            return redirect(url_for("login"))
+
 
         # remember which user has logged in
         session["user_id"] = rows[0]["id"]
+        session["username"] = rows[0]["username"]
+
 
         # redirect user to home page
         return redirect(url_for("index2"))
@@ -185,22 +196,18 @@ def logout():
 
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
-    """Get coin information."""
-
+    """Get stock quote."""
+    naam = request.form.get("symbol").lower()
     if request.method == "POST":
-        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
-            return apology("Invalid Symbol")
+            flash("No result")
 
         return render_template("quoted.html", coins=search)
 
     else:
-        if session["user_id"]:
-            return render_template("index2.html")
-
-        else:
-            return render_template("index.html")
+        return render_template("quote.html")
 
 @app.route("/favs", methods=["GET", "POST"])
 @login_required
@@ -211,7 +218,9 @@ def favs():
         add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :naam)", id = session["user_id"], naam =  request.form.get("symbol"))
 
         if not search:
-            return apology("Invalid Symbol")
+            flash("No result")
+            return redirect(url_for("index2"))
+
 
         return render_template("favs.html", coins=search)
 
@@ -227,15 +236,18 @@ def register():
 
         # ensure username was submitted
         if not request.form.get("username"):
-            return apology("Must provide username")
+            flash("Must provide username")
+            return redirect(url_for("register"))
 
         # ensure password was submitted
         elif not request.form.get("password"):
-            return apology("Must provide password")
+            flash("Must provide password")
+            return redirect(url_for("register"))
 
         # ensure password and verified password is the same
         elif request.form.get("password") != request.form.get("passwordagain"):
-            return apology("password doesn't match")
+            flash("Password doesn't match")
+            return redirect(url_for("register"))
 
         # insert the new user into users, storing the hash of the user's password
         result = db.execute("INSERT INTO users (username, hash) \
@@ -244,7 +256,8 @@ def register():
                              hash=pwd_context.hash(request.form.get("password")))
 
         if not result:
-            return apology("Username already exist")
+            flash("Username already exist")
+            return redirect(url_for("register"))
 
         # remember which user has logged in
         session["user_id"] = result
@@ -268,15 +281,18 @@ def sell():
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
 
         if not search:
-            return apology("Invalid Coin")
+            flash("Invalid Coin")
+            return redirect(url_for("sell"))
 
         # Checks if a valid amount is sold.
         try:
             amount = int(request.form.get("amount"))
             if amount < 0:
-                return apology("Amount must be positive!")
+                flash("Amount must be positive!")
+                return redirect(url_for("sell"))
         except:
-            return apology("Amount must be positive!")
+            flash("Amount must be positive!")
+            return redirect(url_for("sell"))
 
         # select the symbol shares of that user
         user_shares = db.execute("SELECT shares FROM portfolio \
@@ -285,7 +301,8 @@ def sell():
 
         # check if enough shares to sell
         if not user_shares or int(user_shares[0]["shares"]) < amount:
-            return apology("You don't have that amount of coins!")
+            flash("You don't have that amount of coins!")
+            return redirect(url_for("sell"))
 
         # update history of a sell
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
@@ -313,7 +330,6 @@ def sell():
                     WHERE id=:id AND symbol=:symbol", \
                     shares=shares_total, id=session["user_id"], \
                     symbol=search[0]["naam"])
-
         # return to index
         return redirect(url_for("index2"))
 
@@ -344,26 +360,33 @@ def password():
     if request.method == "POST":
         # checkt of er iets ingevuld is
         if not request.form.get("old_pwd"):
-            return apology("Please enter old password")
+            flash("Please enter old password")
+            return redirect(url_for("password"))
+
         elif not request.form.get("new_pwd"):
-            return apology("Please enter new password")
+            flash("Please enter new password")
+            return redirect(url_for("password"))
+
         elif not request.form.get("confirm_pwd"):
-            return apology("Please enter new password again")
+            flash("Please enter new password again")
+            return redirect(url_for("password"))
 
         # checkt of nieuwe password en conformation password hetzelfde zijn
         if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
-            return apology("Password do not match")
+            flash("Password do not match")
+            return redirect(url_for("password"))
 
         # checkt of het oude Password correct is
         code = db.execute("SELECT hash FROM users WHERE id= :id", id=session["user_id"])
 
         # http://passlib.readthedocs.io
         if not pwd_context.verify(request.form.get("old_pwd"), code[0]["hash"]):
-            return apology("old password is incorrect...")
+            flash("old password is incorrect!")
+            return redirect(url_for("password"))
 
         # update de user tabel in de D.B ZIE REGISTER!
         db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
-        flash("You have succesfully changed your password!")
+        flash("password changed!")
         return redirect(url_for("index"))
 
     else:
@@ -372,6 +395,8 @@ def password():
 @app.route("/clipboard", methods=["GET", "POST"])
 def clipboard():
     """Post to the clipboard"""
+
+
 
     if request.method == "POST":
         post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))

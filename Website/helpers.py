@@ -121,7 +121,7 @@ def api():
     db = SQL("sqlite:///finance.db")
     api = "https://api.coinmarketcap.com/v1/ticker/?"
 
-    limit = 500
+    limit = 50
     url = api + urllib.parse.urlencode({"limit": limit})
     json_data = requests.get(url).json()
     db.execute("DELETE FROM coins")
