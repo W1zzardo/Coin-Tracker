@@ -33,9 +33,8 @@ db = SQL("sqlite:///finance.db")
 
 @app.route("/")
 def index():
-    api(60)
+    api(50)
     # select each symbol owned by the user and it's amount
-    api()
     coins = db.execute("SELECT * from coins")
 
     return render_template("index.html", coins = coins)
@@ -43,7 +42,7 @@ def index():
 @app.route("/index2", methods=["GET", "POST"])
 @login_required
 def index2():
-    api()
+    api(50)
 
     coins = db.execute("SELECT * from coins")
 
@@ -68,7 +67,7 @@ def index2():
 @login_required
 def buy():
     """Buy a coin"""
-    api()
+    api(100)
     if request.method == "GET":
         return render_template("buy.html")
     else:
@@ -197,7 +196,7 @@ def logout():
 @app.route("/quote", methods=["GET", "POST"])
 def quote():
     """Get coin information."""
-    api()
+    api(100)
 
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
@@ -213,7 +212,8 @@ def quote():
 @app.route("/favs", methods=["GET", "POST"])
 @login_required
 def favs():
-    api()
+
+    api(100)
 
     if request.method == "POST":
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
@@ -274,7 +274,7 @@ def register():
 @login_required
 def sell():
     """Sell a coin"""
-    api()
+    api(100)
 
     if request.method == "GET":
         return render_template("sell.html")
@@ -340,7 +340,7 @@ def sell():
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    api()
+    api(100)
 
     coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
@@ -357,7 +357,6 @@ def profile():
 @app.route("/password", methods=["GET", "POST"])
 def password():
     '''Change password if user is logged in'''
-
 
     if request.method == "POST":
         # checkt of er iets ingevuld is
@@ -397,8 +396,6 @@ def password():
 @app.route("/clipboard", methods=["GET", "POST"])
 def clipboard():
     """Post to the clipboard"""
-
-
 
     if request.method == "POST":
         post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
