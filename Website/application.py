@@ -443,4 +443,31 @@ def clipboard():
 #                                    WHERE id=:id", id=session["user_id"])
 
 
+@app.route("/loan", methods=["GET", "POST"])
+@login_required
+def loan():
+    """Get a loan."""
 
+    if request.method == "POST":
+
+        # ensure must be integers
+        try:
+            loan = int(request.form.get("loan"))
+            if loan < 0:
+                return apology("Loan must be positive amount")
+            elif loan > 1000:
+                flash("Cannot loan more than $1,000 at once")
+                return redirect(url_for("loan"))
+        except:
+            flash("Loan must be positive integer")
+            return redirect(url_for("loan"))
+
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
+                    loan=loan, id=session["user_id"])
+
+        # return to index
+        flash("Loan is successful", "No need to pay me back")
+        return redirect(url_for("loan"))
+    else:
+        return render_template("loan.html")
