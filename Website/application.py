@@ -322,7 +322,11 @@ def sell():
 @login_required
 def profile():
 
-    coins1 = db.execute("SELECT naam from favorites WHERE id = :id", id = session["user_id"])
+    if request.method == "POST":
+        coin = request.form.get("coin")
+        remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
+
+    coins1 = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
     lengte = len(coins1)
 
     coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
@@ -330,8 +334,6 @@ def profile():
     for coin in coins:
         for i in coin:
             lijst.append(i)
-
-
 
     return render_template("profile.html", coins = lijst )
 
