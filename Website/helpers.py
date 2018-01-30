@@ -23,7 +23,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 def api(limit):
     db = SQL("sqlite:///finance.db")
     api = "https://api.coinmarketcap.com/v1/ticker/?"
