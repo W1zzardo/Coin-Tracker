@@ -27,7 +27,7 @@ Session(app)
 
 # configure CS50 Library to use SQLite database
 db = SQL("sqlite:///finance.db")
-
+votes = []
 
 @app.route("/")
 def index():
@@ -42,7 +42,6 @@ def index():
 def index2():
     api(50)
 
-    votes = []
     coins = db.execute("SELECT * from coins")
 
     if request.method == "POST":
@@ -338,23 +337,39 @@ def profile():
     # delete coin from favorites when delete button is pressed
     if request.method == "POST":
         coin = request.form.get("coin")
-        remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
+        remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin",\
+                            id = session["user_id"], coin = coin)
 
     # retrive favorites and portfolio from database
-    favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
-    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id", id=session["user_id"])
+    favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
+                            id = session["user_id"])
+    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id",\
+                            id=session["user_id"])
+
+    all_votes = Counter(votes)
 
     favorites_length = len(favorites)
     portfolio_length = len(portfolio)
+    votes_length = len(votes)
 
-    all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = favorites[i]["naam"]) for i in range (favorites_length)]
-    all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = portfolio[i]["name"]) for i in range (portfolio_length)]
+    all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
+                            naam = favorites[i]["naam"]) for i in range (favorites_length)]
+
+    all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
+                            naam = portfolio[i]["name"]) for i in range (portfolio_length)]
+
+    all_votes_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
+                            naam = all_votes[i]) for i in all_votes]
+
 
     favorites_list = ([i for coin in all_favorite_coins for i in coin])
     portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
+    votes_list = ([i for coin in all_votes_coins for i in coin])
 
-    return render_template("profile.html", favorite_coins = favorites_list, portfolio_coins = portfolio_list, username = session["username"], \
-    money = str(round(session["cash"], 2)))
+
+    return render_template("profile.html", favorite_coins = favorites_list,\
+                            portfolio_coins = portfolio_list, vote_coins = votes_list, \
+                            username = session["username"], money = str(round(session["cash"], 2)), vote_amount = all_votes)
 
 
 @app.route("/password", methods=["GET", "POST"])
@@ -389,7 +404,9 @@ def password():
             return redirect(url_for("password"))
 
         # update de user tabel in de D.B ZIE REGISTER!
-        db.execute("UPDATE users SET hash= :hash WHERE id= :id", hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
+        db.execute("UPDATE users SET hash= :hash WHERE id= :id",\
+                    hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
+
         flash("You've succesfully changed your password!")
         return redirect(url_for("index"))
 
