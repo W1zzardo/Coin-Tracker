@@ -3,6 +3,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import gettempdir
+from collections import Counter
 
 from helpers import *
 import time
@@ -41,21 +42,29 @@ def index():
 def index2():
     api(50)
 
+    votes = []
     coins = db.execute("SELECT * from coins")
 
     if request.method == "POST":
 
+        # if add button is selected, add to favorites
         if request.form.get("coin") != None :
             coin = request.form.get("coin")
             add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :coin)", id = session["user_id"], coin = coin)
 
+        # if up button is selected add coin to votes
         elif request.form.get("up") != None :
             up = request.form.get("up")
+            votes.append(up)
             up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
+            print (votes)
 
+        # if down button is selected remove 1 instance of coin from list (if in list)
         elif request.form.get("down") != None :
             down = request.form.get("down")
-            add = db.execute("INSERT INTO downvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = down)
+            if down in votes:
+                votes.remove(down)
+            add = db.execute("DELETE FROM upvote(coin) VALUES(:coin)", coin = down)
 
     return render_template("index2.html", coins = coins )
 
@@ -440,5 +449,4 @@ def clipboard():
 
     # print portfolio in index homepage
 #    updated_portfolio = db.execute("SELECT * from portfolio \
-<<<<<<< HEAD
 #                                    WHERE id=:id", id=session["user_id"])
