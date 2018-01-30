@@ -19,9 +19,21 @@
         <td>{{ coin.naam }}</td>
         <td>{{ coin.prijs }}  $</td>
         <td>{{ coin.cap }}</td>
-        <td>{{ coin.percent_1h }}</td>
-        <td>{{ coin.percent_24h }}</td>
-        <td>{{ coin.percent_7d }}</td>
+        {% if coin.percent_1h|float > 0 %}
+            <td style="color:green;">{{ coin.percent_1h }}%</td>
+        {% else %}
+            <td style="color:red;">{{ coin.percent_1h }}%</td>
+        {% endif %}
+        {% if coin.percent_24h|float > 0 %}
+            <td style="color:green;">{{ coin.percent_24h }}%</td>
+        {% else %}
+            <td style="color:red;">{{ coin.percent_24h }}%</td>
+        {% endif %}
+        {% if coin.percent_7d|float > 0 %}
+            <td style="color:green;">{{ coin.percent_7d }}%</td>
+        {% else %}
+            <td style="color:red;">{{ coin.percent_7d }}%</td>
+        {% endif %}
       </tr>
     {% endfor %}
     </table>
