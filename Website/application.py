@@ -341,6 +341,11 @@ def sell():
 def profile():
     api(100)
 
+    # create a temporary variable to store TOTAL worth ( cash + share)
+    total_cash = 0
+    lijst = []
+    lijst2 = []
+
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
@@ -349,12 +354,47 @@ def profile():
     lengte = len(coins1)
 
     coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
-    lijst = []
+
     for coin in coins:
         for i in coin:
             lijst.append(i)
 
-    return render_template("profile.html", coins = lijst )
+    # select each symbol owned by the user and it's amount
+    portfolio_symbols = db.execute("SELECT shares, name \
+                                    FROM portfolio WHERE id = :id", \
+                                    id=session["user_id"])
+
+
+    # update each symbol prices and total
+    for portfolio_symbol in portfolio_symbols:
+        symbol = portfolio_symbol["name"]
+        amount = portfolio_symbol["shares"]
+
+        search = [db.execute("SELECT * from coins WHERE naam = :naam", naam = symbol) for i in range (lengte)]
+        for coin in coins:
+            for i in coin:
+                lijst2.append(i)
+
+        total = amount * search["prijs"]
+        total_cash += total
+        db.execute("UPDATE portfolio SET price=:price, \
+                    total=:total WHERE id=:id AND symbol=:symbol", \
+                    price=search[0]["prijs"], \
+                    total=total, id=session["user_id"], symbol=symbol)
+
+    # update user's cash in portfolio
+    updated_cash = db.execute("SELECT cash FROM users \
+                               WHERE id=:id", id=session["user_id"])
+
+    # update total cash -> cash + shares worth
+    total_cash += updated_cash[0]["cash"]
+
+    # print portfolio in index homepage
+    updated_portfolio = db.execute("SELECT * from portfolio \
+                                    WHERE id=:id", id=session["user_id"])
+
+    return render_template("profile.html", coins = lijst, stocks = updated_portfolio, \
+                            cash = updated_cash[0]["cash"], total = total_cash)
 
 
 @app.route("/password", methods=["GET", "POST"])
@@ -395,52 +435,3 @@ def password():
 
     else:
         return render_template("password.html")
-
-@app.route("/clipboard", methods=["GET", "POST"])
-def clipboard():
-    """Post to the clipboard"""
-
-    if request.method == "POST":
-        post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
-
-        return redirect(url_for("index2"))
-
-    else:
-        return render_template("clipboard.html")
-
-#def portfolio():
-
-#    # select each symbol owned by the user and it's amount
-#    portfolio_symbols = db.execute("SELECT shares, symbol \
-#                                    FROM portfolio WHERE id = :id", \
-#                                    id=session["user_id"])
-
-
-    # create a temporary variable to store TOTAL worth ( cash + share)
-#    total_cash = 0
-
-    # update each symbol prices and total
-#    for portfolio_symbol in portfolio_symbols:
-#        symbol = portfolio_symbol["symbol"]
-#        shares = portfolio_symbol["shares"]
-#        stock = lookup(symbol)
-#        total = shares * stock["price"]
-#        total_cash += total
-#        db.execute("UPDATE portfolio SET pri     ce=:price, \
-#                    total=:total WHERE id=:id AND symbol=:symbol", \
-#                    price=usd(stock["price"]), \
-#                   total=usd(total), id=session["user_id"], symbol=symbol)
-
-    # update user's cash in portfolio
-#    updated_cash = db.execute("SELECT cash FROM users \
-#                               WHERE id=:id", id=session["user_id"])
-
-    # update total cash -> cash + shares worth
-#    total_cash += updated_cash[0]["cash"]
-
-    # print portfolio in index homepage
-#    updated_portfolio = db.execute("SELECT * from portfolio \
-#                                    WHERE id=:id", id=session["user_id"])
-
-
-
