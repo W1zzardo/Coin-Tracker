@@ -402,19 +402,6 @@ def password():
     else:
         return render_template("password.html")
 
-
-@app.route("/clipboard", methods=["GET", "POST"])
-def clipboard():
-    """Post to the clipboard"""
-
-    if request.method == "POST":
-        post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
-
-        return redirect(url_for("index2"))
-
-    else:
-        return render_template("clipboard.html")
-
 @app.route("/loan", methods=["GET", "POST"])
 @login_required
 def loan():
