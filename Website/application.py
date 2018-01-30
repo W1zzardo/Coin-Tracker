@@ -68,7 +68,6 @@ def index2():
 
     return render_template("index2.html", coins = coins )
 
-
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
@@ -78,8 +77,10 @@ def buy():
         return render_template("buy.html")
     else:
         # Checks if the coin exists.
+        naam = request.form.get("symbol").lower()
+
         if request.method == "POST":
-            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("The coin you entered does not exist!")
@@ -108,7 +109,7 @@ def buy():
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=amount, \
-                    price=usd(search[0]["prijs"]), id=session["user_id"])
+                    price=(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash
         db.execute("UPDATE users SET cash = cash - :purchase WHERE id = :id", \
@@ -124,8 +125,8 @@ def buy():
         if not user_shares:
             db.execute("INSERT INTO portfolio (name, shares, price, total, id) \
                         VALUES(:name, :shares, :price, :total, :id)", \
-                        name=search[0]["naam"], shares=amount, price=usd(search[0]["prijs"]), \
-                        total=usd(amount * search[0]["prijs"]), \
+                        name=search[0]["naam"], shares=amount, price=(search[0]["prijs"]), \
+                        total=(amount * search[0]["prijs"]), \
                         id=session["user_id"])
 
         # Else increment the shares count
@@ -138,7 +139,6 @@ def buy():
 
         # return to index
         return redirect(url_for("index2"))
-
 
 @app.route("/history")
 @login_required
@@ -181,6 +181,7 @@ def login():
         # remember which user has logged in
         session["user_id"] = rows[0]["id"]
         session["username"] = rows[0]["username"]
+        session["cash"] = rows[0]["cash"]
 
 
         # redirect user to home page
@@ -215,27 +216,6 @@ def quote():
 
     else:
         return render_template("quote.html")
-
-@app.route("/favs", methods=["GET", "POST"])
-@login_required
-def favs():
-
-    api(100)
-
-    if request.method == "POST":
-        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
-        add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :naam)", id = session["user_id"], naam =  request.form.get("symbol"))
-
-        if not search:
-            flash("The coin you entered does not exist!")
-            return redirect(url_for("index2"))
-
-
-        return render_template("favs.html", coins=search)
-
-    else:
-        return render_template("favs.html")
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -288,8 +268,10 @@ def sell():
 
     else:
         # Checks if the coin exists.
+        naam = request.form.get("symbol").lower()
+
         if request.method == "POST":
-            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("The coin you entered does not exist!")
@@ -319,7 +301,7 @@ def sell():
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=-amount, \
-                    price=usd(search[0]["prijs"]), id=session["user_id"])
+                    price=(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
@@ -354,16 +336,21 @@ def profile():
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
 
-    coins1 = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
-    lengte = len(coins1)
 
-    coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
-    lijst = []
-    for coin in coins:
-        for i in coin:
-            lijst.append(i)
+    favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
+    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id", id=session["user_id"])
 
-    return render_template("profile.html", coins = lijst )
+    favorites_length = len(favorites)
+    portfolio_length = len(portfolio)
+
+    all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = favorites[i]["naam"]) for i in range (favorites_length)]
+    all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = portfolio[i]["name"]) for i in range (portfolio_length)]
+
+    favorites_list = ([i for coin in all_favorite_coins for i in coin])
+    portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
+
+    return render_template("profile.html", favorite_coins = favorites_list, portfolio_coins = portfolio_list, username = session["username"], \
+    money = str(round(session["cash"], 2)))
 
 
 @app.route("/password", methods=["GET", "POST"])
@@ -405,48 +392,33 @@ def password():
     else:
         return render_template("password.html")
 
-@app.route("/clipboard", methods=["GET", "POST"])
-def clipboard():
-    """Post to the clipboard"""
+@app.route("/loan", methods=["GET", "POST"])
+@login_required
+def loan():
+    """Get a loan."""
 
     if request.method == "POST":
-        post = db.execute("INSERT INTO clipboard (id, message) VALUES(:id, :message)", id = session["user_id"], message = request.form.get("message"))
 
-        return redirect(url_for("index2"))
+        # ensure must be integers
+        try:
+            amount = request.form.get("loan").lower()
+            loan = int(amount)
 
+            if loan < 0:
+                return apology("Loan must be positive amount")
+            elif loan > 1000:
+                flash("Cannot loan more than $1,000 at once")
+                return redirect(url_for("loan"))
+        except:
+            flash("Loan must be positive integer")
+            return redirect(url_for("loan"))
+
+        # update user cash (increase)
+        db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
+                    loan=loan, id=session["user_id"])
+
+        # return to index
+        flash("Loan is successful", "No need to pay me back")
+        return redirect(url_for("loan"))
     else:
-        return render_template("clipboard.html")
-
-#def portfolio():
-
-#    # select each symbol owned by the user and it's amount
-#    portfolio_symbols = db.execute("SELECT shares, symbol \
-#                                    FROM portfolio WHERE id = :id", \
-#                                    id=session["user_id"])
-
-
-    # create a temporary variable to store TOTAL worth ( cash + share)
-#    total_cash = 0
-
-    # update each symbol prices and total
-#    for portfolio_symbol in portfolio_symbols:
-#        symbol = portfolio_symbol["symbol"]
-#        shares = portfolio_symbol["shares"]
-#        stock = lookup(symbol)
-#        total = shares * stock["price"]
-#        total_cash += total
-#        db.execute("UPDATE portfolio SET pri     ce=:price, \
-#                    total=:total WHERE id=:id AND symbol=:symbol", \
-#                    price=usd(stock["price"]), \
-#                   total=usd(total), id=session["user_id"], symbol=symbol)
-
-    # update user's cash in portfolio
-#    updated_cash = db.execute("SELECT cash FROM users \
-#                               WHERE id=:id", id=session["user_id"])
-
-    # update total cash -> cash + shares worth
-#    total_cash += updated_cash[0]["cash"]
-
-    # print portfolio in index homepage
-#    updated_portfolio = db.execute("SELECT * from portfolio \
-#                                    WHERE id=:id", id=session["user_id"])
+        return render_template("loan.html")
