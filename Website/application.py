@@ -59,7 +59,6 @@ def index2():
 
     return render_template("index2.html", coins = coins )
 
-
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
@@ -69,8 +68,10 @@ def buy():
         return render_template("buy.html")
     else:
         # Checks if the coin exists.
+        naam = request.form.get("symbol").lower()
+
         if request.method == "POST":
-            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("The coin you entered does not exist!")
@@ -129,7 +130,6 @@ def buy():
 
         # return to index
         return redirect(url_for("index2"))
-
 
 @app.route("/history")
 @login_required
@@ -208,27 +208,6 @@ def quote():
     else:
         return render_template("quote.html")
 
-@app.route("/favs", methods=["GET", "POST"])
-@login_required
-def favs():
-
-    api(100)
-
-    if request.method == "POST":
-        search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
-        add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :naam)", id = session["user_id"], naam =  request.form.get("symbol"))
-
-        if not search:
-            flash("The coin you entered does not exist!")
-            return redirect(url_for("index2"))
-
-
-        return render_template("favs.html", coins=search)
-
-    else:
-        return render_template("favs.html")
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user."""
@@ -280,8 +259,10 @@ def sell():
 
     else:
         # Checks if the coin exists.
+        naam = request.form.get("symbol").lower()
+
         if request.method == "POST":
-            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = request.form.get("symbol"))
+            search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         if not search:
             flash("The coin you entered does not exist!")
@@ -411,7 +392,9 @@ def loan():
 
         # ensure must be integers
         try:
-            loan = int(request.form.get("loan"))
+            amount = request.form.get("loan").lower()
+            loan = int(amount)
+
             if loan < 0:
                 return apology("Loan must be positive amount")
             elif loan > 1000:

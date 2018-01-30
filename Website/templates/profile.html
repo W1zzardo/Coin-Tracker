@@ -15,17 +15,17 @@
       <table class="table table-striped" style="width:100%">
         <tr>
           <th>Name</th>
-          <th>Price ($)</th>
+          <th>Price</th>
           <th>Market Cap</th>
           <th>Change (1h)</th>
           <th>Change (24h)</th>
           <th>Change (7d)</th>
-          <th>Remove From Favorites</th>
+          <th>Remove from Favorites</th>
         </tr>
       {% for coin in favorite_coins %}
         <tr>
           <td>{{ coin.naam }}</td>
-          <td>{{ coin.prijs }}</td>
+          <td>{{ coin.prijs }}  $</td>
           <td>{{ coin.cap }}</td>
               {% if coin.percent_1h|float > 0 %}
                   <td style="color:green;">{{ coin.percent_1h }}%</td>
@@ -52,7 +52,7 @@
         <table class="table table-striped" style="width:100%">
           <tr>
             <th>Name</th>
-            <th>Price ($)</th>
+            <th>Price</th>
             <th>Market Cap</th>
             <th>Change (1h)</th>
             <th>Change (24h)</th>
@@ -62,7 +62,7 @@
         {% for coin in portfolio_coins %}
           <tr>
             <td>{{ coin.naam }}</td>
-            <td>{{ coin.prijs }}</td>
+            <td>{{ coin.prijs }}  $</td>
             <td>{{ coin.cap }}</td>
                 {% if coin.percent_1h|float > 0 %}
                     <td style="color:green;">{{ coin.percent_1h }}%</td>

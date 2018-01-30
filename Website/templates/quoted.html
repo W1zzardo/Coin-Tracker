@@ -7,8 +7,8 @@
 {% block main %}
     <table class="table table-striped" style="width:100%">
       <tr>
-        <th>Naam</th>
-        <th>Prijs ($)</th>
+        <th>Name</th>
+        <th>Price</th>
         <th>Market Cap</th>
         <th>Change (1h)</th>
         <th>Change (24h)</th>
@@ -17,7 +17,7 @@
     {% for coin in coins %}
       <tr>
         <td>{{ coin.naam }}</td>
-        <td>{{ coin.prijs }}</td>
+        <td>{{ coin.prijs }}  $</td>
         <td>{{ coin.cap }}</td>
         <td>{{ coin.percent_1h }}</td>
         <td>{{ coin.percent_24h }}</td>
