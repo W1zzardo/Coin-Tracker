@@ -10,7 +10,7 @@
       <tr>
         <th>Number</th>
         <th>Naam</th>
-        <th>Prijs</th>
+        <th>Prijs ($)</th>
         <th>Market Cap</th>
         <th>Change (1h)</th>
         <th>Change (24h)</th>
@@ -25,14 +25,28 @@
         <td>{{ coins[i].naam }}</td>
         <td>{{ coins[i].prijs }}</td>
         <td>{{ coins[i].cap }}</td>
-        <td>{{ coins[i].percent_1h }}</td>
-        <td>{{ coins[i].percent_24h }}</td>
-        <td>{{ coins[i].percent_7d }}</td>
+       {% if coins[i].percent_1h|float > 0 %}
+                <td class="positive">{{ coins[i].percent_1h }}%</td>
+            {% else %}
+                <td class="negative">{{ coins[i].percent_1h }}%</td>
+            {% endif %}
+            {% if coins[i].percent_24h|float > 0 %}
+                <td class="positive">{{ coins[i].percent_24h }}%</td>
+            {% else %}
+                <td class="negative">{{ coins[i].percent_24h }}%</td>
+            {% endif %}
+            {% if coins[i].percent_7d|float > 0 %}
+                <td class="positive">{{ coins[i].percent_7d }}%</td>
+            {% else %}
+                <td class="negative">{{ coins[i].percent_7d }}%</td>
+            {% endif %}
         <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "coin" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-plus-sign"></span> Add </button></form></td>
         <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "up" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-arrow-up"></span> Up </button></form></td>
         <td><form method = "post" name = "{{ coins[i].naam }}"><button type="submit" name = "down" value = "{{ coins[i].naam }}" ><span class="glyphicon glyphicon-arrow-down"></span> Down </button></form></td>
       </tr>
     {% endfor %}
     </table>
+
+    <meta http-equiv="refresh" content="300">
 
 {% endblock %}

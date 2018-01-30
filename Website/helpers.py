@@ -3,6 +3,7 @@ import urllib.request
 import urllib.parse
 import requests
 from cs50 import SQL
+import time
 
 
 from flask import redirect, render_template, request, session
