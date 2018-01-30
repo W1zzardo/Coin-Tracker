@@ -21,20 +21,20 @@
         <td>{{ coins[i].naam }}</td>
         <td>{{ coins[i].prijs }}</td>
         <td>{{ coins[i].cap }}</td>
-        {% if coins[i].percent_1h|float > 0 %}
-                <td class="positive">{{ coins[i].percent_1h }}%</td>
+       {% if coins[i].percent_1h|float > 0 %}
+                <td style="color:green;">{{ coins[i].percent_1h }}%</td>
             {% else %}
-                <td class="negative">{{ coins[i].percent_1h }}%</td>
+                <td style="color:red;">{{ coins[i].percent_1h }}%</td>
             {% endif %}
             {% if coins[i].percent_24h|float > 0 %}
-                <td class="positive">{{ coins[i].percent_24h }}%</td>
+                <td style="color:green;">{{ coins[i].percent_24h }}%</td>
             {% else %}
-                <td class="negative">{{ coins[i].percent_24h }}%</td>
+                <td style="color:red;">{{ coins[i].percent_24h }}%</td>
             {% endif %}
             {% if coins[i].percent_7d|float > 0 %}
-                <td class="positive">{{ coins[i].percent_7d }}%</td>
+                <td style="color:green;">{{ coins[i].percent_7d }}%</td>
             {% else %}
-                <td class="negative">{{ coins[i].percent_7d }}%</td>
+                <td style="color:red;">{{ coins[i].percent_7d }}%</td>
             {% endif %}
       </tr>
     {% endfor %}
