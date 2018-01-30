@@ -5,76 +5,84 @@
 {% endblock %}
 
 {% block main %}
-    <p class="lead text-left">Favorite Coins</p>
+    <div class="jumbotron">
+      <h1 class="display-4">Hello, {{ username }}.</h1>
+      <p class="lead">Welcome to your dashboard. On this page you'll find an overview of all your information.</p>
+      <p class="lead">You currently have {{ money }} $ in your possession.</p>
+      <hr class="my-4">
+      <p class="lead text-left">Favorite Coins</p>
 
-    <table class="table table-striped" style="width:100%">
-      <tr>
-        <th>Naam</th>
-        <th>Prijs</th>
-        <th>Market Cap</th>
-        <th>Change (1h)</th>
-        <th>Change (24h)</th>
-        <th>Change (7d)</th>
-        <th>Remove coin </th>
-      </tr>
-    {% for coin in coins %}
-      <tr>
-        <td>{{ coin.naam }}</td>
-        <td>{{ coin.prijs }}</td>
-        <td>{{ coin.cap }}</td>
-            {% if coin.percent_1h|float > 0 %}
-                <td class="positive">{{ coin.percent_1h }}%</td>
-            {% else %}
-                <td class="negative">{{ coin.percent_1h }}%</td>
-            {% endif %}
-            {% if coin.percent_24h|float > 0 %}
-                <td class="positive">{{ coin.percent_24h }}%</td>
-            {% else %}
-                <td class="negative">{{ coin.percent_24h }}%</td>
-            {% endif %}
-            {% if coin.percent_7d|float > 0 %}
-                <td class="positive">{{ coin.percent_7d }}%</td>
-            {% else %}
-                <td class="negative">{{ coin.percent_7d }}%</td>
-            {% endif %}
-        <td><form method = "post" name = "{{ coin.naam }}"><button type="submit" name = "coin"  value = "{{ coin.naam }}"><span class="glyphicon glyphicon-minus-sign"></span> Remove</button></form></td>
-      </tr>
-    {% endfor %}
-    </table>
+      <table class="table table-striped" style="width:100%">
+        <tr>
+          <th>Name</th>
+          <th>Price ($)</th>
+          <th>Market Cap</th>
+          <th>Change (1h)</th>
+          <th>Change (24h)</th>
+          <th>Change (7d)</th>
+          <th>Remove From Favorites</th>
+        </tr>
+      {% for coin in favorite_coins %}
+        <tr>
+          <td>{{ coin.naam }}</td>
+          <td>{{ coin.prijs }}</td>
+          <td>{{ coin.cap }}</td>
+              {% if coin.percent_1h|float > 0 %}
+                  <td style="color:green;">{{ coin.percent_1h }}%</td>
+              {% else %}
+                  <td style="color:red;">{{ coin.percent_1h }}%</td>
+              {% endif %}
+              {% if coin.percent_24h|float > 0 %}
+                  <td style="color:green;">{{ coin.percent_24h }}%</td>
+              {% else %}
+                  <td style="color:red;">{{ coin.percent_24h }}%</td>
+              {% endif %}
+              {% if coin.percent_7d|float > 0 %}
+                  <td style="color:green;">{{ coin.percent_7d }}%</td>
+              {% else %}
+                  <td style="color:red;">{{ coin.percent_7d }}%</td>
+              {% endif %}
+          <td><form method = "post" name = "{{ coin.naam }}"><button type="submit" name = "coin"  value = "{{ coin.naam }}"><span class="glyphicon glyphicon-minus-sign"></span> Remove</button></form></td>
+        </tr>
+      {% endfor %}
+      </table>
 
-    <p class="lead text-left">Favorite Coins</p>
+        <p class="lead text-left">Coins in your Possession</p>
 
-    <table class="table table-striped" style="width:100%">
-      <tr>
-        <th>Symbol</th>
-        <th>Name</th>
-        <th>Shares</th>
-        <th>Price</th>
-        <th>TOTAL</th>
-      </tr>
-    {% for stock in stocks %}
-      <tr>
-        <td>{{ stock.symbol }}</td>
-        <td>{{ stock.name }}</td>
-        <td>{{ stock.shares }}</td>
-        <td>{{ stock.price }}</td>
-        <td>{{ stock.total }}</td>
-      </tr>
-    {% endfor %}
-      <tr>
-        <td>CASH</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>{{ cash }}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td><b>{{ total }}</b></td>
-      </tr>
-    </table>
+        <table class="table table-striped" style="width:100%">
+          <tr>
+            <th>Name</th>
+            <th>Price ($)</th>
+            <th>Market Cap</th>
+            <th>Change (1h)</th>
+            <th>Change (24h)</th>
+            <th>Change (7d)</th>
+            <th>Amount</th>
+          </tr>
+        {% for coin in portfolio_coins %}
+          <tr>
+            <td>{{ coin.naam }}</td>
+            <td>{{ coin.prijs }}</td>
+            <td>{{ coin.cap }}</td>
+                {% if coin.percent_1h|float > 0 %}
+                    <td style="color:green;">{{ coin.percent_1h }}%</td>
+                {% else %}
+                    <td style="color:red;">{{ coin.percent_1h }}%</td>
+                {% endif %}
+                {% if coin.percent_24h|float > 0 %}
+                    <td style="color:green;">{{ coin.percent_24h }}%</td>
+                {% else %}
+                    <td style="color:red;">{{ coin.percent_24h }}%</td>
+                {% endif %}
+                {% if coin.percent_7d|float > 0 %}
+                    <td class="positive">{{ coin.percent_7d }}%</td>
+                {% else %}
+                    <td style="color:red;">{{ coin.percent_7d }}%</td>
+                {% endif %}
+              <td>{{ amount }}</td>
+          </tr>
+        {% endfor %}
+        </table>
+    </div>
 
 {% endblock %}

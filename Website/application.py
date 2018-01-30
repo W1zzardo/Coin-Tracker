@@ -99,7 +99,7 @@ def buy():
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=amount, \
-                    price=usd(search[0]["prijs"]), id=session["user_id"])
+                    price=(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash
         db.execute("UPDATE users SET cash = cash - :purchase WHERE id = :id", \
@@ -115,8 +115,8 @@ def buy():
         if not user_shares:
             db.execute("INSERT INTO portfolio (name, shares, price, total, id) \
                         VALUES(:name, :shares, :price, :total, :id)", \
-                        name=search[0]["naam"], shares=amount, price=usd(search[0]["prijs"]), \
-                        total=usd(amount * search[0]["prijs"]), \
+                        name=search[0]["naam"], shares=amount, price=(search[0]["prijs"]), \
+                        total=(amount * search[0]["prijs"]), \
                         id=session["user_id"])
 
         # Else increment the shares count
@@ -172,6 +172,7 @@ def login():
         # remember which user has logged in
         session["user_id"] = rows[0]["id"]
         session["username"] = rows[0]["username"]
+        session["cash"] = rows[0]["cash"]
 
 
         # redirect user to home page
@@ -310,7 +311,7 @@ def sell():
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=-amount, \
-                    price=usd(search[0]["prijs"]), id=session["user_id"])
+                    price=(search[0]["prijs"]), id=session["user_id"])
 
         # update user cash (increase)
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
@@ -341,60 +342,25 @@ def sell():
 def profile():
     api(100)
 
-    # create a temporary variable to store TOTAL worth ( cash + share)
-    total_cash = 0
-    lijst = []
-    lijst2 = []
-
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
 
-    coins1 = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
-    lengte = len(coins1)
 
-    coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = coins1[i]["naam"]) for i in range (lengte)]
+    favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
+    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id", id=session["user_id"])
 
-    for coin in coins:
-        for i in coin:
-            lijst.append(i)
+    favorites_length = len(favorites)
+    portfolio_length = len(portfolio)
 
-    # select each symbol owned by the user and it's amount
-    portfolio_symbols = db.execute("SELECT shares, name \
-                                    FROM portfolio WHERE id = :id", \
-                                    id=session["user_id"])
+    all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = favorites[i]["naam"]) for i in range (favorites_length)]
+    all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam", naam = portfolio[i]["name"]) for i in range (portfolio_length)]
 
+    favorites_list = ([i for coin in all_favorite_coins for i in coin])
+    portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
 
-    # update each symbol prices and total
-    for portfolio_symbol in portfolio_symbols:
-        symbol = portfolio_symbol["name"]
-        amount = portfolio_symbol["shares"]
-
-        search = [db.execute("SELECT * from coins WHERE naam = :naam", naam = symbol) for i in range (lengte)]
-        for coin in coins:
-            for i in coin:
-                lijst2.append(i)
-
-        total = amount * search["prijs"]
-        total_cash += total
-        db.execute("UPDATE portfolio SET price=:price, \
-                    total=:total WHERE id=:id AND symbol=:symbol", \
-                    price=search[0]["prijs"], \
-                    total=total, id=session["user_id"], symbol=symbol)
-
-    # update user's cash in portfolio
-    updated_cash = db.execute("SELECT cash FROM users \
-                               WHERE id=:id", id=session["user_id"])
-
-    # update total cash -> cash + shares worth
-    total_cash += updated_cash[0]["cash"]
-
-    # print portfolio in index homepage
-    updated_portfolio = db.execute("SELECT * from portfolio \
-                                    WHERE id=:id", id=session["user_id"])
-
-    return render_template("profile.html", coins = lijst, stocks = updated_portfolio, \
-                            cash = updated_cash[0]["cash"], total = total_cash)
+    return render_template("profile.html", favorite_coins = favorites_list, portfolio_coins = portfolio_list, username = session["username"], \
+    money = str(round(session["cash"], 2)))
 
 
 @app.route("/password", methods=["GET", "POST"])
