@@ -439,6 +439,3 @@ def clipboard():
     # print portfolio in index homepage
 #    updated_portfolio = db.execute("SELECT * from portfolio \
 #                                    WHERE id=:id", id=session["user_id"])
-
-
-
