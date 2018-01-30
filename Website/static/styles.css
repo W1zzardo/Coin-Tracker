@@ -33,8 +33,8 @@
     color: #2e944b;
 }
 
-.negative { background-color: #ea433b; }
-.positive { background-color: #2e944b; }
+.negative { color: red; }
+.positive { color: green; }
 
 main .form-control
 {
