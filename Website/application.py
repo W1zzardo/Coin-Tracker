@@ -205,10 +205,13 @@ def quote():
     """Get coin information."""
     if request.method == "POST":
         api(100)
+
+        # lookup the (lowered) input symbol in database
         naam = request.form.get("symbol").lower()
 
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
+        # in case of failed search return flash error message
         if not search:
             flash("The coin you entered does not exist!")
 
@@ -332,11 +335,12 @@ def sell():
 def profile():
     api(100)
 
+    # delete coin from favorites when delete button is pressed
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin", id = session["user_id"], coin = coin)
 
-
+    # retrive favorites and portfolio from database
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id", id = session["user_id"])
     portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id", id=session["user_id"])
 
