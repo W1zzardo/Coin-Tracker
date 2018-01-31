@@ -55,6 +55,7 @@ def index2():
             up = request.form.get("up")
             up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
 
+
         # If down button is selected remove 1 instance of coin from list (if in list).
         elif request.form.get("down") != None :
             down = request.form.get("down")
@@ -132,7 +133,8 @@ def buy():
                         symbol=search[0]["naam"])
 
         # Return to index.
-        return redirect(url_for("index2"))
+        flash("Succesfully added new shares to your portfolio")
+        return redirect(url_for("profile"))
 
 @app.route("/history")
 @login_required
@@ -154,12 +156,12 @@ def login():
         # Ensure username was submitted.
         if not request.form.get("username"):
             flash("You forgot to enter your username!")
-            return redirect(url_for("login"))
+            return render_template("login.html")
 
         # Ensure password was submitted.
         elif not request.form.get("password"):
             flash("You forgot to enter your password!")
-            return redirect(url_for("login"))
+            return render_template("login.html")
 
         # Query database for username.
         rows = db.execute("SELECT * FROM users \
@@ -169,7 +171,7 @@ def login():
         # Ensure username exists and password is correct.
         if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
             flash("This username/password combination is invalid!")
-            return redirect(url_for("login"))
+            return render_template("login.html")
 
 
         # Remember which user has logged in.
@@ -328,7 +330,8 @@ def sell():
                     shares=shares_total, id=session["user_id"], \
                     symbol=search[0]["naam"])
         # Return to index.
-        return redirect(url_for("index2"))
+        flash("Succesfully sold the shares")
+        return redirect(url_for("profile"))
 
 
 @app.route("/profile", methods=["GET", "POST"])
@@ -344,8 +347,9 @@ def profile():
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
                             id = session["user_id"])
     portfolio = db.execute("SELECT DISTINCT name FROM portfolio WHERE id = :id",\
+
                             id=session["user_id"])
-    portfolio_amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
+    amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
                             id=session["user_id"])
     upvotes = db.execute("SELECT coin, value FROM upvote")
     downvotes = db.execute("SELECT coin, value FROM downvote")
@@ -389,7 +393,7 @@ def password():
     '''Change password if user is logged in'''
 
     if request.method == "POST":
-
+        # Checkt of er iets ingevuld is.
         if not request.form.get("old_pwd"):
             flash("You forgot to enter your old password!")
             return redirect(url_for("password"))
@@ -402,7 +406,7 @@ def password():
             flash("You forgot to confirm your new password!")
             return redirect(url_for("password"))
 
-
+        # Checkt of nieuwe password en conformation password hetzelfde zijn.
         if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
             flash("The passwords you provided do not match!")
             return redirect(url_for("password"))
@@ -443,7 +447,7 @@ def loan():
                 flash("Cannot loan more than $1,000 at once")
                 return redirect(url_for("loan"))
         except:
-            flash("Loan must be positive integer")
+            flash("Loan must be positive and an integer!")
             return redirect(url_for("loan"))
 
         # Update user cash (increase).
@@ -451,7 +455,7 @@ def loan():
                     loan=loan, id=session["user_id"])
 
         # Return to index.
-        flash("Loan is successful", "No need to pay me back")
+        flash("Loan is successful", "No need to pay me back!")
         return redirect(url_for("loan"))
     else:
         return render_template("loan.html")
