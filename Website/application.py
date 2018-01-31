@@ -127,12 +127,12 @@ def buy():
         else:
             shares_total = user_shares[0]["shares"] + amount
             db.execute("UPDATE portfolio SET shares=:shares \
-                        WHERE id=:id AND symbol=:symbol", \
+                        WHERE id=:id AND name=:name", \
                         shares=shares_total, id=session["user_id"], \
-                        symbol=search[0]["naam"])
+                        name=search[0]["naam"])
 
         # Return to index.
-        flash("Succesfully added new shares to your portfolio")
+        flash("Succesfully bought the coins!")
         return redirect(url_for("profile"))
 
 @app.route("/history")
@@ -318,18 +318,18 @@ def sell():
         # If after decrement is zero, delete shares from portfolio.
         if shares_total == 0:
             db.execute("DELETE FROM portfolio \
-                        WHERE id=:id AND symbol=:symbol", \
+                        WHERE id=:id AND name=:name", \
                         id=session["user_id"], \
-                        symbol=search[0]["naam"])
+                        name=search[0]["naam"])
 
         # Otherwise, update portfolio shares count.
         else:
             db.execute("UPDATE portfolio SET shares=:shares \
-                    WHERE id=:id AND symbol=:symbol", \
+                    WHERE id=:id AND name=:name", \
                     shares=shares_total, id=session["user_id"], \
-                    symbol=search[0]["naam"])
+                    name=search[0]["naam"])
         # Return to index.
-        flash("Succesfully sold the shares")
+        flash("Succesfully sold the coins!")
         return redirect(url_for("profile"))
 
 
@@ -337,6 +337,14 @@ def sell():
 @login_required
 def profile():
     api(100)
+
+    rows = db.execute("SELECT * FROM users \
+                        WHERE id = :id",\
+                        id = session["user_id"])
+
+    username = rows[0]["username"]
+    money = rows[0]["cash"]
+
 
     # Removes a coin from favorites.
     if request.method == "POST":
@@ -386,7 +394,7 @@ def profile():
 
     return render_template("profile.html", favorite_coins = favorites_list,\
                             portfolio_coins = portfolio_list, votes_coins = votes_list,
-                            username = session["username"], money = str(round(session["cash"], 2)),\
+                            username = username, money = str(round(money, 2)),\
                             possessed = possess_amount, votes = votes)
 
 
