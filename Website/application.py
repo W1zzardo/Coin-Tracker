@@ -72,6 +72,7 @@ def buy():
     else:
         # Checks if the coin exists.
         naam = request.form.get("symbol").lower()
+        naam = naam.strip(" ")
 
         if request.method == "POST":
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
@@ -203,7 +204,7 @@ def quote():
 
         # Lookup the (lowered) input symbol in database.
         naam = request.form.get("symbol").lower()
-
+        naam = naam.strip(" ")
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
         # In case of failed search return flash error message.
@@ -273,6 +274,7 @@ def sell():
     else:
         # Checks if the coin exists.
         naam = request.form.get("symbol").lower()
+        naam = naam.strip(" ")
 
         if request.method == "POST":
             search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
@@ -313,11 +315,20 @@ def sell():
         # Decrement the shares count.
         shares_total = shares - amount
 
+
+
+
         db.execute("DELETE FROM portfolio where id = :id AND name = :symbol",id=session["user_id"], symbol = naam )
 
         db.execute("INSERT INTO portfolio(name, shares, price, id)\
         VALUES(:name, :shares, :price, :id)", name = naam , shares= shares_total,\
         price=(search[0]["prijs"]), id=session["user_id"])
+
+        if shares_total == 0:
+            db.execute("DELETE FROM portfolio \
+                        WHERE id=:id AND name=:name", \
+                        id=session["user_id"], \
+                        name=naam)
 
         # Return to index.
         flash("Succesfully sold the coins!")
