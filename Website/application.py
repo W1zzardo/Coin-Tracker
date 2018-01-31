@@ -55,7 +55,6 @@ def index2():
             up = request.form.get("up")
             up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
 
-
         # If down button is selected remove 1 instance of coin from list (if in list).
         elif request.form.get("down") != None :
             down = request.form.get("down")
@@ -339,17 +338,18 @@ def sell():
 def profile():
     api(100)
 
+    # Removes a coin from favorites.
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin",\
                             id = session["user_id"], coin = coin)
 
+    # Gets raw information for profile.
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
                             id = session["user_id"])
     portfolio = db.execute("SELECT DISTINCT name FROM portfolio WHERE id = :id",\
-
                             id=session["user_id"])
-    amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
+    portfolio_amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
                             id=session["user_id"])
     upvotes = db.execute("SELECT coin, value FROM upvote")
     downvotes = db.execute("SELECT coin, value FROM downvote")
@@ -360,6 +360,7 @@ def profile():
     possess_amount = defaultdict(int)
     votes = defaultdict(int)
 
+    # Processes information into lower level.
     for a in portfolio_amount:
         possess_amount[a['name']] += int(a['shares'])
 
@@ -378,6 +379,7 @@ def profile():
     all_votes_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = i) for i in votes_list]
 
+    # Creates lists containing live coin information for each table.
     favorites_list = ([i for coin in all_favorite_coins for i in coin])
     portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
     votes_list= ([i for coin in all_votes_coins for i in coin])
@@ -442,9 +444,9 @@ def loan():
             loan = int(amount)
 
             if loan < 0:
-                return apology("Loan must be positive amount")
+                return apology("Loan must be positive amount!")
             elif loan > 1000:
-                flash("Cannot loan more than $1,000 at once")
+                flash("Cannot loan more than $1,000 at once!")
                 return redirect(url_for("loan"))
         except:
             flash("Loan must be positive and an integer!")
@@ -455,7 +457,8 @@ def loan():
                     loan=loan, id=session["user_id"])
 
         # Return to index.
-        flash("Loan is successful", "No need to pay me back!")
+        flash("Loan is successful!", "No need to pay me back!")
+
         return redirect(url_for("loan"))
     else:
         return render_template("loan.html")
