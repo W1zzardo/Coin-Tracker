@@ -75,7 +75,7 @@
                     <td style="color:red;">{{ coin.percent_24h }}%</td>
                 {% endif %}
                 {% if coin.percent_7d|float > 0 %}
-                    <td class="color:green;">{{ coin.percent_7d }}%</td>
+                    <td style="color:green;">{{ coin.percent_7d }}%</td>
                 {% else %}
                     <td style="color:red;">{{ coin.percent_7d }}%</td>
                 {% endif %}
@@ -84,7 +84,7 @@
         {% endfor %}
         </table>
 
-        <p class="lead text-left">Global Top Upvotes</p>
+        <p class="lead text-left">Global Votes</p>
 
         <table class="table table-striped" style="width:100%">
           <tr>
@@ -94,9 +94,9 @@
             <th>Change (1h)</th>
             <th>Change (24h)</th>
             <th>Change (7d)</th>
-            <th>Amount</th>
+            <th>Votes</th>
           </tr>
-        {% for coin in vote_coins %}
+        {% for coin in votes_coins %}
           <tr>
             <td>{{ coin.naam }}</td>
             <td>${{ coin.prijs }}</td>
@@ -112,11 +112,15 @@
                     <td style="color:red;">{{ coin.percent_24h }}%</td>
                 {% endif %}
                 {% if coin.percent_7d|float > 0 %}
-                    <td class="color:green;">{{ coin.percent_7d }}%</td>
+                    <td style="color:green;">{{ coin.percent_7d }}%</td>
                 {% else %}
                     <td style="color:red;">{{ coin.percent_7d }}%</td>
                 {% endif %}
-              <td>{{ vote_amount[coin] }}</td>
+                {% if votes[coin.naam]|float > 0 %}
+                    <td style="color:green;">{{ votes[coin.naam] }}</td>
+                {% else %}
+                    <td style="color:red;">{{ votes[coin.naam] }}</td>
+                {% endif %}
           </tr>
         {% endfor %}
         </table>

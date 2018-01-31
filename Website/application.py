@@ -245,8 +245,14 @@ def register():
             flash("The username you provided does already exist!")
             return redirect(url_for("register"))
 
+        rows = db.execute("SELECT * FROM users \
+                           WHERE username = :username", \
+                           username=request.form.get("username"))
+
         # Remember which user has logged in.
         session["user_id"] = result
+        session["username"] = rows[0]["username"]
+        session["cash"] = rows[0]["cash"]
 
         # Redirect user to home page.
         return redirect(url_for("index2"))
@@ -344,28 +350,38 @@ def profile():
     upvotes = db.execute("SELECT coin, value FROM upvote")
     downvotes = db.execute("SELECT coin, value FROM downvote")
 
-
     favorites_length = len(favorites)
     portfolio_length = len(portfolio)
+
+    possess_amount = defaultdict(int)
+    votes = defaultdict(int)
+
+    for a in portfolio_amount:
+        possess_amount[a['name']] += int(a['shares'])
+
+    for b in upvotes:
+        votes[b['coin']] += int(b['value'])
+
+    for c in downvotes:
+        votes[c['coin']] += int(c['value'])
+
+    votes_list = ([i for i in votes])
 
     all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = favorites[i]["naam"]) for i in range (favorites_length)]
     all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = portfolio[i]["name"]) for i in range (portfolio_length)]
+    all_votes_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
+                            naam = i) for i in votes_list]
 
     favorites_list = ([i for coin in all_favorite_coins for i in coin])
     portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
-
-    possess_amount = defaultdict(int)
-    upvote_amount = defaultdict(int)
-    downvote_amount = defaultdict(int)
-
-    for d in portfolio_amount:
-        possess_amount[d['name']] += int(d['shares'])
+    votes_list= ([i for coin in all_votes_coins for i in coin])
 
     return render_template("profile.html", favorite_coins = favorites_list,\
-                            portfolio_coins = portfolio_list, username = session["username"], \
-                            money = str(round(session["cash"], 2)), possessed = possess_amount)
+                            portfolio_coins = portfolio_list, votes_coins = votes_list,
+                            username = session["username"], money = str(round(session["cash"], 2)),\
+                            possessed = possess_amount, votes = votes)
 
 
 @app.route("/password", methods=["GET", "POST"])
