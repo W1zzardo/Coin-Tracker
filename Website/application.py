@@ -407,7 +407,7 @@ def password():
             flash("The passwords you provided do not match!")
             return redirect(url_for("password"))
 
-        # checkt of het oude Password correct is
+        # Checks if the old password is correct.
         code = db.execute("SELECT hash FROM users WHERE id= :id", id=session["user_id"])
 
         # http://passlib.readthedocs.io
