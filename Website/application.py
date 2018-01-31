@@ -281,6 +281,9 @@ def sell():
             flash("The coin you entered does not exist!")
             return redirect(url_for("sell"))
 
+        user_shares = db.execute("SELECT shares FROM portfolio WHERE id = :id AND name= :naam", id=session["user_id"], naam = naam)
+        shares = aandelen(user_shares)
+
         # Checks if a valid amount is sold.
         try:
             amount = int(request.form.get("amount"))
@@ -291,13 +294,8 @@ def sell():
             flash("You must sell a positve amount of coins!")
             return redirect(url_for("sell"))
 
-        # Select the symbol shares of that user.
-        user_shares = db.execute("SELECT shares FROM portfolio \
-                                 WHERE id = :id AND name=:name", \
-                                 id=session["user_id"], name=search[0]["naam"])
-
         # Check if enough shares to sell.
-        if not user_shares or int(user_shares[0]["shares"]) < amount:
+        if not shares or shares < amount:
             flash("You don't have that amount of coins!")
             return redirect(url_for("sell"))
 
@@ -313,38 +311,28 @@ def sell():
                     purchase=search[0]["prijs"] * float(amount))
 
         # Decrement the shares count.
-        shares_total = user_shares[0]["shares"] - amount
+        shares_total = shares - amount
 
-        # If after decrement is zero, delete shares from portfolio.
-        if shares_total == 0:
-            db.execute("DELETE FROM portfolio \
-                        WHERE id=:id AND name=:name", \
-                        id=session["user_id"], \
-                        name=search[0]["naam"])
+        db.execute("DELETE FROM portfolio where id = :id AND name = :symbol",id=session["user_id"], symbol = naam )
 
-        # Otherwise, update portfolio shares count.
-        else:
-            db.execute("UPDATE portfolio SET shares=:shares \
-                    WHERE id=:id AND name=:name", \
-                    shares=shares_total, id=session["user_id"], \
-                    name=search[0]["naam"])
+        db.execute("INSERT INTO portfolio(name, shares, price, id)\
+        VALUES(:name, :shares, :price, :id)", name = naam , shares= shares_total,\
+        price=(search[0]["prijs"]), id=session["user_id"])
+
         # Return to index.
         flash("Succesfully sold the coins!")
         return redirect(url_for("profile"))
-
 
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
     api(100)
 
-    rows = db.execute("SELECT * FROM users \
-                        WHERE id = :id",\
+    rows = db.execute("SELECT * FROM users WHERE id = :id",\
                         id = session["user_id"])
 
     username = rows[0]["username"]
     money = rows[0]["cash"]
-
 
     # Removes a coin from favorites.
     if request.method == "POST":

@@ -42,3 +42,11 @@ def api(limit):
         percent_7d = json_data[i]["percent_change_7d"]
 
         db.execute("INSERT INTO coins (naam, prijs, cap, percent_1h, percent_24h, percent_7d) VALUES(:naam, :prijs, :cap, :percent_1h, :percent_24h, :percent_7d)", naam = naam, prijs = prijs, cap = cap, percent_1h = percent_1h, percent_24h = percent_24h, percent_7d = percent_7d)
+
+def aandelen(user_shares):
+    a = 0
+    lengte = len(user_shares)
+    for i in range(lengte):
+        a += user_shares[i]["shares"]
+
+    return(a)
