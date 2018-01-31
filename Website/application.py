@@ -3,7 +3,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import gettempdir
-from collections import Counter, defaultdict
+from collections import Counter
 
 from helpers import *
 import time
@@ -343,12 +343,10 @@ def profile():
     # retrive favorites and portfolio from database
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
                             id = session["user_id"])
-    portfolio = db.execute("SELECT DISTINCT name FROM portfolio WHERE id = :id",\
+    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id",\
                             id=session["user_id"])
-    amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
-                            id=session["user_id"])
-    all_votes = Counter(votes)
 
+    all_votes = Counter(votes)
 
     favorites_length = len(favorites)
     portfolio_length = len(portfolio)
@@ -356,25 +354,22 @@ def profile():
 
     all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = favorites[i]["naam"]) for i in range (favorites_length)]
+
     all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = portfolio[i]["name"]) for i in range (portfolio_length)]
+
     all_votes_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
-                            naam = i) for i in all_votes]
+                            naam = all_votes[i]) for i in all_votes]
 
 
     favorites_list = ([i for coin in all_favorite_coins for i in coin])
     portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
     votes_list = ([i for coin in all_votes_coins for i in coin])
 
-    possess_amount = defaultdict(int)
-
-    for d in amount:
-        possess_amount[d['name']] += int(d['shares'])
 
     return render_template("profile.html", favorite_coins = favorites_list,\
                             portfolio_coins = portfolio_list, vote_coins = votes_list, \
-                            username = session["username"], money = str(round(session["cash"], 2)),\
-                            vote_amount = all_votes, possessed = possess_amount)
+                            username = session["username"], money = str(round(session["cash"], 2)), vote_amount = all_votes)
 
 
 @app.route("/password", methods=["GET", "POST"])
@@ -382,7 +377,7 @@ def password():
     '''Change password if user is logged in'''
 
     if request.method == "POST":
-        # checkt of er iets ingevuld is
+        # checkt if all fields have been filled in
         if not request.form.get("old_pwd"):
             flash("You forgot to enter your old password!")
             return redirect(url_for("password"))
@@ -395,7 +390,7 @@ def password():
             flash("You forgot to confirm your new password!")
             return redirect(url_for("password"))
 
-        # checkt of nieuwe password en conformation password hetzelfde zijn
+        # checkt w
         if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
             flash("The passwords you provided do not match!")
             return redirect(url_for("password"))
