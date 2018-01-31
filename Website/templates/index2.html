@@ -10,7 +10,7 @@
       <tr>
         <th>Number</th>
         <th>Name</th>
-        <th>Prijs ($)</th>
+        <th>Price</th>
         <th>Market Cap</th>
         <th>Change (1h)</th>
         <th>Change (24h)</th>
@@ -23,7 +23,7 @@
       <tr>
         <th>{{ i + 1 }}</th>
         <td>{{ coins[i].naam }}</td>
-        <td>{{ coins[i].prijs }}</td>
+        <td>${{ coins[i].prijs }}</td>
         <td>{{ coins[i].cap }}</td>
        {% if coins[i].percent_1h|float > 0 %}
                 <td style="color:green;">{{ coins[i].percent_1h }}%</td>

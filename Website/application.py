@@ -3,7 +3,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from flask_session import Session
 from passlib.apps import custom_app_context as pwd_context
 from tempfile import gettempdir
-from collections import Counter
+from collections import Counter, defaultdict
 
 from helpers import *
 import time
@@ -27,7 +27,6 @@ Session(app)
 
 # configure CS50 Library to use SQLite database
 db = SQL("sqlite:///finance.db")
-votes = []
 
 @app.route("/")
 def index():
@@ -54,16 +53,12 @@ def index2():
         # Ff up button is selected add coin to votes.
         elif request.form.get("up") != None :
             up = request.form.get("up")
-            votes.append(up)
             up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
-            print (votes)
 
         # If down button is selected remove 1 instance of coin from list (if in list).
         elif request.form.get("down") != None :
             down = request.form.get("down")
-            if down in votes:
-                votes.remove(down)
-            add = db.execute("DELETE FROM upvote(coin) VALUES(:coin)", coin = down)
+            down = db.execute("INSERT INTO downvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = down)
 
     return render_template("index2.html", coins = coins )
 
@@ -335,42 +330,42 @@ def sell():
 def profile():
     api(100)
 
-    # Delete coin from favorites when delete button is pressed.
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin",\
                             id = session["user_id"], coin = coin)
 
-    # Retrive favorites and portfolio from database.
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
                             id = session["user_id"])
-    portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id",\
+    portfolio = db.execute("SELECT DISTINCT name FROM portfolio WHERE id = :id",\
                             id=session["user_id"])
+    portfolio_amount = db.execute("SELECT name, shares FROM portfolio WHERE id = :id",\
+                            id=session["user_id"])
+    upvotes = db.execute("SELECT coin, value FROM upvote")
+    downvotes = db.execute("SELECT coin, value FROM downvote")
 
-    all_votes = Counter(votes)
 
     favorites_length = len(favorites)
     portfolio_length = len(portfolio)
-    votes_length = len(votes)
 
     all_favorite_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = favorites[i]["naam"]) for i in range (favorites_length)]
-
     all_portfolio_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
                             naam = portfolio[i]["name"]) for i in range (portfolio_length)]
 
-    all_votes_coins = [db.execute("SELECT * from coins WHERE naam = :naam",\
-                            naam = all_votes[i]) for i in all_votes]
-
-
     favorites_list = ([i for coin in all_favorite_coins for i in coin])
     portfolio_list = ([i for coin in all_portfolio_coins for i in coin])
-    votes_list = ([i for coin in all_votes_coins for i in coin])
 
+    possess_amount = defaultdict(int)
+    upvote_amount = defaultdict(int)
+    downvote_amount = defaultdict(int)
+
+    for d in portfolio_amount:
+        possess_amount[d['name']] += int(d['shares'])
 
     return render_template("profile.html", favorite_coins = favorites_list,\
-                            portfolio_coins = portfolio_list, vote_coins = votes_list, \
-                            username = session["username"], money = str(round(session["cash"], 2)), vote_amount = all_votes)
+                            portfolio_coins = portfolio_list, username = session["username"], \
+                            money = str(round(session["cash"], 2)), possessed = possess_amount)
 
 
 @app.route("/password", methods=["GET", "POST"])
