@@ -46,19 +46,19 @@ def index2():
 
     if request.method == "POST":
 
-        # if add button is selected, add to favorites
+        # If add button is selected, add to favorites.
         if request.form.get("coin") != None :
             coin = request.form.get("coin")
             add = db.execute("INSERT INTO favorites(id,naam) VALUES(:id, :coin)", id = session["user_id"], coin = coin)
 
-        # if up button is selected add coin to votes
+        # Ff up button is selected add coin to votes.
         elif request.form.get("up") != None :
             up = request.form.get("up")
             votes.append(up)
             up = db.execute("INSERT INTO upvote(id,coin) VALUES(:id, :coin)", id = session["user_id"], coin = up)
             print (votes)
 
-        # if down button is selected remove 1 instance of coin from list (if in list)
+        # If down button is selected remove 1 instance of coin from list (if in list).
         elif request.form.get("down") != None :
             down = request.form.get("down")
             if down in votes:
@@ -95,32 +95,32 @@ def buy():
             flash("You must buy a positve amount of coins!")
             return redirect(url_for("buy"))
 
-        # select user's cash
+        # Select user's cash.
         money = db.execute("SELECT cash FROM users WHERE id = :id", \
                             id = session["user_id"])
 
-        # check if enough money to buy
+        # Check if enough money to buy.
         if not money or float(money[0]["cash"]) < search[0]["prijs"] * amount:
             flash("You don't have enough money!")
             return redirect(url_for("buy"))
 
-        # update history
+        # Update history.
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=amount, \
                     price=(search[0]["prijs"]), id=session["user_id"])
 
-        # update user cash
+        # Update user cash.
         db.execute("UPDATE users SET cash = cash - :purchase WHERE id = :id", \
                     id=session["user_id"], \
                     purchase=search[0]["prijs"] * float(amount))
 
-        # Select user shares of that symbol
+        # Select user shares of that symbol.
         user_shares = db.execute("SELECT shares FROM portfolio \
                            WHERE id = :id AND symbol=:symbol", \
                            id=session["user_id"], symbol=search[0]["naam"])
 
-        # if user doesn't has shares of that symbol, create new stock object
+        # If user doesn't has shares of that symbol, create new stock object.
         if not user_shares:
             db.execute("INSERT INTO portfolio (name, shares, price, total, id) \
                         VALUES(:name, :shares, :price, :total, :id)", \
@@ -128,7 +128,7 @@ def buy():
                         total=(amount * search[0]["prijs"]), \
                         id=session["user_id"])
 
-        # Else increment the shares count
+        # Else increment the shares count.
         else:
             shares_total = user_shares[0]["shares"] + amount
             db.execute("UPDATE portfolio SET shares=:shares \
@@ -136,7 +136,7 @@ def buy():
                         shares=shares_total, id=session["user_id"], \
                         symbol=search[0]["naam"])
 
-        # return to index
+        # Return to index.
         return redirect(url_for("index2"))
 
 @app.route("/history")
@@ -150,53 +150,53 @@ def history():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in."""
-    # forget any user_id
+    # Forget any user_id.
     session.clear()
 
-    # if user reached route via POST (as by submitting a form via POST)
+    # If user reached route via POST (as by submitting a form via POST).
     if request.method == "POST":
 
-        # ensure username was submitted
+        # Ensure username was submitted.
         if not request.form.get("username"):
             flash("You forgot to enter your username!")
             return redirect(url_for("login"))
 
-        # ensure password was submitted
+        # Ensure password was submitted.
         elif not request.form.get("password"):
             flash("You forgot to enter your password!")
             return redirect(url_for("login"))
 
-        # query database for username
+        # Query database for username.
         rows = db.execute("SELECT * FROM users \
                            WHERE username = :username", \
                            username=request.form.get("username"))
 
-        # ensure username exists and password is correct
+        # Ensure username exists and password is correct.
         if len(rows) != 1 or not pwd_context.verify(request.form.get("password"), rows[0]["hash"]):
             flash("This username/password combination is invalid!")
             return redirect(url_for("login"))
 
 
-        # remember which user has logged in
+        # Remember which user has logged in.
         session["user_id"] = rows[0]["id"]
         session["username"] = rows[0]["username"]
         session["cash"] = rows[0]["cash"]
 
 
-        # redirect user to home page
+        # Redirect user to home page.
         return redirect(url_for("index2"))
 
-    # else if user reached route via GET (as by clicking a link or via redirect)
+    # Else if user reached route via GET (as by clicking a link or via redirect).
     else:
         return render_template("login.html")
 
 @app.route("/logout")
 def logout():
     """Log user out."""
-    # forget any user_id
+    # Forget any user_id.
     session.clear()
 
-    # redirect user to login form
+    # Redirect user to login form.
     return redirect(url_for("index"))
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -205,12 +205,12 @@ def quote():
     if request.method == "POST":
         api(100)
 
-        # lookup the (lowered) input symbol in database
+        # Lookup the (lowered) input symbol in database.
         naam = request.form.get("symbol").lower()
 
         search = db.execute("SELECT * from coins WHERE naam = :naam", naam = naam)
 
-        # in case of failed search return flash error message
+        # In case of failed search return flash error message.
         if not search:
             flash("The coin you entered does not exist!")
 
@@ -225,22 +225,22 @@ def register():
 
     if request.method == "POST":
 
-        # ensure username was submitted
+        # Ensure username was submitted.
         if not request.form.get("username"):
             flash("You forgot to enter a username!")
             return redirect(url_for("register"))
 
-        # ensure password was submitted
+        # Ensure password was submitted.
         elif not request.form.get("password"):
             flash("You forgot to enter a password!")
             return redirect(url_for("register"))
 
-        # ensure password and verified password is the same
+        # Ensure password and verified password is the same.
         elif request.form.get("password") != request.form.get("passwordagain"):
             flash("The passwords you provided do not match!")
             return redirect(url_for("register"))
 
-        # insert the new user into users, storing the hash of the user's password
+        # Insert the new user into users, storing the hash of the user's password.
         result = db.execute("INSERT INTO users (username, hash) \
                              VALUES(:username, :hash)", \
                              username=request.form.get("username"), \
@@ -250,10 +250,10 @@ def register():
             flash("The username you provided does already exist!")
             return redirect(url_for("register"))
 
-        # remember which user has logged in
+        # Remember which user has logged in.
         session["user_id"] = result
 
-        # redirect user to home page
+        # Redirect user to home page.
         return redirect(url_for("index2"))
 
     else:
@@ -289,43 +289,44 @@ def sell():
             flash("You must sell a positve amount of coins!")
             return redirect(url_for("sell"))
 
-        # select the symbol shares of that user
+        # Select the symbol shares of that user.
         user_shares = db.execute("SELECT shares FROM portfolio \
                                  WHERE id = :id AND name=:name", \
                                  id=session["user_id"], name=search[0]["naam"])
 
-        # check if enough shares to sell
+        # Check if enough shares to sell.
         if not user_shares or int(user_shares[0]["shares"]) < amount:
             flash("You don't have that amount of coins!")
             return redirect(url_for("sell"))
 
-        # update history of a sell
+        # Update history of a sell.
         db.execute("INSERT INTO histories (symbol, shares, price, id) \
                     VALUES(:symbol, :shares, :price, :id)", \
                     symbol=search[0]["naam"], shares=-amount, \
                     price=(search[0]["prijs"]), id=session["user_id"])
 
-        # update user cash (increase)
+        # Update user cash (increase).
         db.execute("UPDATE users SET cash = cash + :purchase WHERE id = :id", \
                     id=session["user_id"], \
                     purchase=search[0]["prijs"] * float(amount))
 
-        # decrement the shares count
+        # Decrement the shares count.
         shares_total = user_shares[0]["shares"] - amount
 
-        # if after decrement is zero, delete shares from portfolio
+        # If after decrement is zero, delete shares from portfolio.
         if shares_total == 0:
             db.execute("DELETE FROM portfolio \
                         WHERE id=:id AND symbol=:symbol", \
                         id=session["user_id"], \
                         symbol=search[0]["naam"])
-        # otherwise, update portfolio shares count
+
+        # Otherwise, update portfolio shares count.
         else:
             db.execute("UPDATE portfolio SET shares=:shares \
                     WHERE id=:id AND symbol=:symbol", \
                     shares=shares_total, id=session["user_id"], \
                     symbol=search[0]["naam"])
-        # return to index
+        # Return to index.
         return redirect(url_for("index2"))
 
 
@@ -334,13 +335,13 @@ def sell():
 def profile():
     api(100)
 
-    # delete coin from favorites when delete button is pressed
+    # Delete coin from favorites when delete button is pressed.
     if request.method == "POST":
         coin = request.form.get("coin")
         remove = db.execute("DELETE FROM favorites WHERE id = :id and naam = :coin",\
                             id = session["user_id"], coin = coin)
 
-    # retrive favorites and portfolio from database
+    # Retrive favorites and portfolio from database.
     favorites = db.execute("SELECT DISTINCT naam from favorites WHERE id = :id",\
                             id = session["user_id"])
     portfolio = db.execute("SELECT name FROM portfolio WHERE id = :id",\
@@ -377,7 +378,7 @@ def password():
     '''Change password if user is logged in'''
 
     if request.method == "POST":
-        # checkt if all fields have been filled in
+
         if not request.form.get("old_pwd"):
             flash("You forgot to enter your old password!")
             return redirect(url_for("password"))
@@ -390,7 +391,7 @@ def password():
             flash("You forgot to confirm your new password!")
             return redirect(url_for("password"))
 
-        # checkt w
+
         if request.form.get("confirm_pwd") != request.form.get("new_pwd"):
             flash("The passwords you provided do not match!")
             return redirect(url_for("password"))
@@ -403,7 +404,7 @@ def password():
             flash("The old password you provided is incorrect!")
             return redirect(url_for("password"))
 
-        # update de user tabel in de D.B ZIE REGISTER!
+        # Update de user tabel in de
         db.execute("UPDATE users SET hash= :hash WHERE id= :id",\
                     hash=pwd_context.hash(request.form.get("new_pwd")), id=session["user_id"])
 
@@ -420,7 +421,7 @@ def loan():
 
     if request.method == "POST":
 
-        # ensure must be integers
+        # Ensure must be integers.
         try:
             amount = request.form.get("loan").lower()
             loan = int(amount)
@@ -434,11 +435,11 @@ def loan():
             flash("Loan must be positive integer")
             return redirect(url_for("loan"))
 
-        # update user cash (increase)
+        # Update user cash (increase).
         db.execute("UPDATE users SET cash = cash + :loan WHERE id = :id", \
                     loan=loan, id=session["user_id"])
 
-        # return to index
+        # Return to index.
         flash("Loan is successful", "No need to pay me back")
         return redirect(url_for("loan"))
     else:
