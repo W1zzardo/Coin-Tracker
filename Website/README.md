@@ -50,3 +50,6 @@ Helpers.py cointains the most used functions such as search functions (in order 
 
 Finally "finance.db" is the websites database. All stored data can be found here. 
 
+## Productvideo
+
+The productvideo can be found here: https://www.youtube.com/watch?v=gVF6QzpzYDU
