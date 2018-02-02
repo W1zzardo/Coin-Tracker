@@ -52,4 +52,4 @@ Finally "finance.db" is the websites database. All stored data can be found here
 
 ## Productvideo
 
-The productvideo can be found here: https://www.youtube.com/watch?v=gVF6QzpzYDU
+The productvideo can be found here: https://www.youtube.com/watch?v=o4pb4zI7SAE
